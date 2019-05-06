@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# coding: utf-8
 
 """
 This script creates CV Lab elements source code from OpenCV source code.
@@ -484,11 +485,13 @@ class FuncVariant(object):
         argstr = ", ".join(argnamelist[:firstoptarg])
         argstr = "[, ".join([argstr] + argnamelist[firstoptarg:])
         argstr += "]" * noptargs
+
         if self.rettype:
             outlist = [("retval", -1)] + outlist
         elif self.isconstructor:
             assert outlist == []
             outlist = [("self", -1)]
+
         if self.isconstructor:
             classname = self.classname
             if classname.startswith("Cv"):
@@ -502,11 +505,14 @@ class FuncVariant(object):
         self.py_docstring = "%s(%s) -> %s" % (self.wname, argstr, outstr)
         self.py_noptargs = noptargs
         self.py_arglist = arglist
+
         for aname, argno in arglist:
             self.args[argno].py_inputarg = True
+
         for aname, argno in outlist:
             if argno >= 0:
                 self.args[argno].py_outputarg = True
+
         self.py_outlist = outlist
 
 
@@ -519,7 +525,10 @@ class FuncInfo(object):
         self.variants = []
 
     def add_variant(self, decl):
-        self.variants.append(FuncVariant(self.classname, self.name, decl, self.isconstructor))
+        self.variants.append(FuncVariant(self.classname,
+                                         self.name,
+                                         decl,
+                                         self.isconstructor))
 
     def get_wrapper_name(self):
         name = self.name

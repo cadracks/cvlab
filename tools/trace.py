@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+r"""Start with Trace"""
+
 from stacktracer import trace_start, trace_stop
 
 if __name__ == '__main__':

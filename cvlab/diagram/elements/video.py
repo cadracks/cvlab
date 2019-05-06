@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+r"""Video elements"""
+
 from collections import deque
 from datetime import datetime
 
@@ -18,13 +23,13 @@ class DelayLine(NormalElement):
     def get_attributes(self):
         return [Input("input")], \
                [Output("o" + str(i + 1)) for i in range(self.num_outputs)], \
-            []
+               []
 
     def process_inputs(self, inputs, outputs, parameters):
         for i in range(self.num_outputs):
             outputs["o" + str(i + 1)] = self.memory[self.num_outputs - i - 1]
-        self.memory.append(inputs['input'].copy())
 
+        self.memory.append(inputs['input'].copy())
 
 
 class Snapshot(NormalElement):
@@ -48,6 +53,7 @@ class Snapshot(NormalElement):
     def process_units(self):
         if not self.do_snap:
             return
+
         self.do_snap = False
         unit = self.units[0]
         unit.outputs["output"].assign(unit.inputs["input"])
@@ -55,7 +61,6 @@ class Snapshot(NormalElement):
     def snap(self):
         self.do_snap = True
         self.recalculate(False, False, True)
-
 
 
 class Accumulator(NormalElement):
@@ -69,7 +74,10 @@ class Accumulator(NormalElement):
     def get_attributes(self):
         return [Input("input")], \
                [Output("output")], \
-               [ComboboxParameter("function",{"Average":"avg","Minimum":"min","Maximum":"max"}),
+               [ComboboxParameter("function",
+                                  {"Average": "avg",
+                                   "Minimum": "min",
+                                   "Maximum": "max"}),
                 FloatParameter("speed", value=0.1, min_=0, max_=1, step=0.01),
                 ButtonParameter("reset", self.reset_memory)]
 
@@ -79,7 +87,9 @@ class Accumulator(NormalElement):
         func = parameters["function"]
         memory = self.memory
 
-        if memory is None or memory.shape != image.shape or memory.dtype != image.dtype:
+        if memory is None \
+                or memory.shape != image.shape \
+                or memory.dtype != image.dtype:
             memory = image
         else:
             if func == "avg":
@@ -97,8 +107,6 @@ class Accumulator(NormalElement):
         self.memory = None
 
 
-
-
 class FpsCounter(NormalElement):
     name = "FPS counter"
     comment = "Counts input frames per second"
@@ -112,7 +120,9 @@ class FpsCounter(NormalElement):
         self.bg = False
 
     def get_attributes(self):
-        return [Input("input")], [Output("output")], [IntParameter("memory", value=5, min_=1, max_=50)]
+        return [Input("input")], \
+               [Output("output")], \
+               [IntParameter("memory", value=5, min_=1, max_=50)]
 
     def get_processing_units(self, inputs, parameters):
         outputs = {"output": Data()}
@@ -120,7 +130,10 @@ class FpsCounter(NormalElement):
 
     def process(self):
         self.prepare_data()
-        if not self.inputs["input"].get(): return
+
+        if not self.inputs["input"].get():
+            return
+
         self.bg = not self.bg
         act_time = datetime.now()
         fps = 1. / (act_time - self.last_time).total_seconds()
@@ -140,5 +153,6 @@ class FpsCounter(NormalElement):
         else:
             self.outputs["output"].get().value = img
         self.last_time = act_time
+
 
 register_elements_auto(__name__, locals(), "Video", 4)

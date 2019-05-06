@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+r"""Video input/output elements"""
+
 import time
 import math
 from threading import Event
@@ -15,20 +20,26 @@ class Camera(InputElement):
     def __init__(self):
         super(Camera, self).__init__()
         self.capture = None
-        self.actual_parameters = {"device": None, "width": 0, "height": 0, "fps": 0}
+        self.actual_parameters = {"device": None,
+                                  "width": 0,
+                                  "height": 0,
+                                  "fps": 0}
         self.last_frame_time = datetime.now()
-        self.play = Event()  # todo: we should load this state from some parameter
+
+        # todo: we should load this state from some parameter
+        self.play = Event()
+
         self.play.set()
         self.recalculate(True, True, True)
 
     def get_attributes(self):
         return [], \
-            [Output("output")], \
-            [IntParameter("device", value=0, min_=0, max_=10),
-             IntParameter("width", value=0, min_=0, max_=4096),
-             IntParameter("height", value=0, min_=0, max_=4096),
-             FloatParameter("fps", value=15, min_=0.1, max_=120),
-             ButtonParameter("pause", self.playpause, "Play / Pause")]
+               [Output("output")], \
+               [IntParameter("device", value=0, min_=0, max_=10),
+                IntParameter("width", value=0, min_=0, max_=4096),
+                IntParameter("height", value=0, min_=0, max_=4096),
+                FloatParameter("fps", value=15, min_=0.1, max_=120),
+                ButtonParameter("pause", self.playpause, "Play / Pause")]
 
     def playpause(self):
         if self.play.is_set():
@@ -39,6 +50,7 @@ class Camera(InputElement):
     def delete(self):
         self.play.set()
         ThreadedElement.delete(self)
+
         if self.capture is not None and self.capture.isOpened():
             self.capture.release()
 
@@ -85,27 +97,40 @@ class Camera(InputElement):
         while True:
             self.may_interrupt()
             now = datetime.now()
+
             if now - self.last_frame_time < timedelta(seconds=1.0/parameters["fps"]):
-                seconds_to_wait = 1.0/parameters["fps"] - (now-self.last_frame_time).total_seconds()
+                seconds_to_wait = \
+                    1.0/parameters["fps"] - (now-self.last_frame_time).total_seconds()
                 breaks = int(round(seconds_to_wait*10+1))
+
                 for _ in range(breaks):
                     time.sleep(seconds_to_wait/breaks)
                     self.may_interrupt()
+
             self.last_frame_time = datetime.now()
             self.may_interrupt()
             self.set_state(Element.STATE_BUSY)
             retval, image = self.capture.read()
             self.may_interrupt()
+
             if image is not None and len(image) > 0:
-                if parameters["width"] and parameters["height"] and (image.shape[0] != parameters["height"] or image.shape[1] != parameters["width"]):
-                    image = cv.resize(image, (parameters["width"], parameters["height"]))
+                if parameters["width"] \
+                        and parameters["height"] \
+                        and (image.shape[0] != parameters["height"]
+                             or image.shape[1] != parameters["width"]):
+                    image = cv.resize(image,
+                                      (parameters["width"],
+                                       parameters["height"]))
                 data.value = image
                 self.set_state(Element.STATE_READY)
                 self.notify_state_changed()
             elif self.repeat_after_end:
                 # if reading from file, then repeat
-                # todo: what if this is a camera device? if so, this means that camera was disconnected so we shall restart it
-                self.capture.set(1, 0)  # poczatek wideo
+
+                # todo: what if this is a camera device?
+                #       if so, this means that camera was disconnected
+                #       so we shall restart it
+                self.capture.set(1, 0)  # the beginning of the video
             else:
                 print("VideoCapture returned null image")
             self.may_interrupt()
@@ -123,7 +148,11 @@ class VideoFrameFilter(NormalElement):
     def get_attributes(self):
         return [Input("input")], \
                [Output("output")], \
-               [IntParameter("drop", value=1, min_=0, max_=120, name="Drop frames")]
+               [IntParameter("drop",
+                             value=1,
+                             min_=0,
+                             max_=120,
+                             name="Drop frames")]
 
     def get_processing_units(self, inputs, parameters):
         outputs = {"output": inputs["input"].create_placeholder()}
@@ -132,9 +161,12 @@ class VideoFrameFilter(NormalElement):
 
     def process_units(self):
         unit = self.units[0]
+
         if not unit.ready_to_execute():
             return
+
         self.dropped += 1
+
         if self.dropped > unit.parameters["drop"]:
             data = unit.inputs["input"].copy()
             if not data.is_complete():
@@ -142,8 +174,6 @@ class VideoFrameFilter(NormalElement):
             self.dropped = 0
             self.may_interrupt()
             unit.outputs["output"].value = data.value
-
-
 
 
 class VideoRecorder(FunctionGuiElement, ThreadedElement):
@@ -160,30 +190,37 @@ class VideoRecorder(FunctionGuiElement, ThreadedElement):
     def get_attributes(self):
         return [Input("input")], \
                [Output("output")], \
-               [SavePathParameter("path"), SizeParameter("size", value=(640, 480)),
-                ButtonParameter("record", self.record), ButtonParameter("stop", self.stop)]
+               [SavePathParameter("path"),
+                SizeParameter("size", value=(640, 480)),
+                ButtonParameter("record", self.record),
+                ButtonParameter("stop", self.stop)]
 
     def process_inputs(self, inputs, outputs, parameters):
         with self.video_lock:
             if self.video and self.video.isOpened():
                 frame = inputs["input"].value
-                frame = cv.resize(frame, self.video_size, interpolation=cv.INTER_LINEAR)
+                frame = cv.resize(frame,
+                                  self.video_size,
+                                  interpolation=cv.INTER_LINEAR)
                 self.video.write(frame)
 
     def record(self):
         self.path = self.parameters["path"].get()
         self.video_size = self.parameters["size"].get()
+
         with self.video_lock:
             if self.video:
                 self.stop()
-            self.video = cv.VideoWriter(self.path, -1, 15, self.video_size, True)
+            self.video = cv.VideoWriter(self.path,
+                                        -1,
+                                        15,
+                                        self.video_size, True)
 
     def stop(self):
         with self.video_lock:
             if self.video:
                 self.video.release()
             self.video = None
-
 
 
 class VideoLoader(Camera):
@@ -194,9 +231,10 @@ class VideoLoader(Camera):
     def get_attributes(self):
         params = super(VideoLoader, self).get_attributes()
         assert params[2][0].name == "device"
-        params[2][0] = PathParameter("device", "Path", value="images/fractal.avi")
+        params[2][0] = PathParameter("device",
+                                     "Path",
+                                     value="images/fractal.avi")
         return params
 
 
 register_elements_auto(__name__, locals(), "Video IO", 4)
-

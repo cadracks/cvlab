@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+r"""Data type elements"""
+
 from .base import *
 
 
@@ -25,7 +30,8 @@ class ColorConverter(NormalElement):
         if parameters["code"] is None:
             outputs["output"] = Data(inputs["input"].value.copy())
         else:
-            outputs["output"] = Data(cv.cvtColor(inputs["input"].value, parameters["code"]))
+            outputs["output"] = Data(cv.cvtColor(inputs["input"].value,
+                                                 parameters["code"]))
 
 
 class TypeConverter(NormalElement):
@@ -44,6 +50,7 @@ class TypeConverter(NormalElement):
     def process_inputs(self, inputs, outputs, parameters):
         type = parameters["type"]
         input_ = inputs["input"].value
+
         if type == input_.dtype:
             output = input_
         elif input_.dtype == np.uint8 and type == np.float32:
@@ -63,10 +70,11 @@ class ChannelSplitter(NormalElement):
     def get_attributes(self):
         return [Input("input")], \
                [Output("1"), Output("2"), Output("3"), Output("4")], \
-            []
+               []
 
     def process_inputs(self, inputs, outputs, parameters):
         channels = cv.split(inputs["input"].value)
+
         for i, image in enumerate(channels):
             outputs[str(i + 1)] = Data(image)
 
@@ -77,16 +85,21 @@ class ChannelMerger(NormalElement):
     package = "Channels"
 
     def get_attributes(self):
-        return [Input("1"), Input("2", optional=True), Input("3", optional=True), Input("4", optional=True)], \
+        return [Input("1"),
+                Input("2", optional=True),
+                Input("3", optional=True),
+                Input("4", optional=True)], \
                [Output("output")], \
-            []
+               []
 
     def process_inputs(self, inputs, outputs, parameters):
         r = []
         od = OrderedDict(sorted(inputs.items()))
+
         for i, image in enumerate(od.values()):
             if image.type() != Data.NONE:
                 r.append(image.value)
+
         img = cv.merge(r)
         outputs["output"] = Data(img)
 
@@ -98,17 +111,24 @@ class ColorspaceExtractor(NormalElement):
 
     def get_attributes(self):
         return [Input("input")], \
-               [Output("R"), Output("G"), Output("B"), Output("H"), Output("S"), Output("V")], \
-            []
+               [Output("R"),
+                Output("G"),
+                Output("B"),
+                Output("H"),
+                Output("S"),
+                Output("V")], \
+               []
 
     def process_inputs(self, inputs, outputs, parameters):
         bgr = cv.split(inputs["input"].value)
-        hsv = cv.split(cv.cvtColor(inputs["input"].value, cv.COLOR_BGR2HSV_FULL))
+        hsv = cv.split(cv.cvtColor(inputs["input"].value,
+                                   cv.COLOR_BGR2HSV_FULL))
         outputs["B"] = Data(bgr[0])
         outputs["G"] = Data(bgr[1])
         outputs["R"] = Data(bgr[2])
         outputs["H"] = Data(hsv[0])
         outputs["S"] = Data(hsv[1])
         outputs["V"] = Data(hsv[2])
+
 
 register_elements_auto(__name__, locals(), "Data types")

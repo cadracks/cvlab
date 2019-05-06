@@ -1,3 +1,7 @@
+# coding: utf-8
+
+r"""UI diagram manager"""
+
 import ntpath
 import os
 import json
@@ -28,17 +32,25 @@ class DiagramManager:
     def get_open_file_name(self):
         global last_file_name
         main_window = self.tabs_container.parent()
-        path, _ = QFileDialog.getOpenFileName(main_window, "Open diagram file", last_file_name, self.FILE_TYPES)
+        path, _ = QFileDialog.getOpenFileName(main_window,
+                                              "Open diagram file",
+                                              last_file_name,
+                                              self.FILE_TYPES)
         if path:
             last_file_name = path
+
         return path
 
     def get_save_file_name(self):
         global last_file_name
         main_window = self.tabs_container.parent()
-        path, _ = QFileDialog.getSaveFileName(main_window, "Save diagram as", last_file_name, self.FILE_TYPES)
+        path, _ = QFileDialog.getSaveFileName(main_window,
+                                              "Save diagram as",
+                                              last_file_name,
+                                              self.FILE_TYPES)
         if path:
             last_file_name = path
+
         return path
 
     def open_diagram_browse(self):
@@ -50,6 +62,7 @@ class DiagramManager:
         # TODO: block the UI for the time of loading?
         if not path or not isfile(path):
             return
+
         with open(path, 'r') as fp:
             try:
                 encoded = fp.read()
@@ -63,37 +76,48 @@ class DiagramManager:
 
     def open_from_settings(self, config):
         try:
-            files = config.get(SETTINGS_LAST_OPEN_SECTION, SETTINGS_LAST_OPEN_OPTION)
+            files = config.get(SETTINGS_LAST_OPEN_SECTION,
+                               SETTINGS_LAST_OPEN_OPTION)
             if files is None:
                 return
             paths = json.loads(files)
             for path in paths:
                 self.open_diagram_from_path(path)
         except ValueError:
-            print("Error loading settings file: wrong entry in the field: [diagram] last_open.")
+            print("Error loading settings file: wrong entry in the field: "
+                  "[diagram] last_open.")
 
     def open_diagram(self, scrolled_wa=None, full_path=None):
         # TODO: block the UI for the time of loading?
         to_open = scrolled_wa
         name = None
+
         if scrolled_wa is None:
             to_open = ScrolledWorkArea(Diagram(), self.style_manager)
+
         if full_path is None:
             name = "new*"
         else:
             name = get_file_name_from_path(full_path)
+
         idx = self.tabs_container.addTab(to_open, name)
+
         if full_path is not None:
             self.tabs_container.setTabToolTip(idx, full_path)
+
         self.tabs_container.setCurrentIndex(idx)
-        for e in to_open.diagram.elements:  # need to do this here, as we want to process repaint events
+
+        # need to do this here, as we want to process repaint events
+        for e in to_open.diagram.elements:
             e.state_changed.emit()
 
     def save_to_settings(self, settings):
         count = self.tabs_container.count()
         paths = [str(self.tabs_container.tabToolTip(i)) for i in range(count)]
         entry = json.dumps(paths)
-        settings.set(SETTINGS_LAST_OPEN_SECTION, SETTINGS_LAST_OPEN_OPTION, entry)
+        settings.set(SETTINGS_LAST_OPEN_SECTION,
+                     SETTINGS_LAST_OPEN_OPTION,
+                     entry)
 
     def save_diagram_as(self, tab_idx=None):
         path = self.get_save_file_name()

@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+r"""Image input/output elements"""
+
 from .base import *
 
 
@@ -6,10 +11,13 @@ class ImageLoader(InputElement):
     comment = "Loads the image from disk"
 
     def get_attributes(self):
-        return [], [Output("output")], [PathParameter("path", value="images/lena.jpg")]
+        return [],\
+               [Output("output")],\
+               [PathParameter("path", value="images/lena.jpg")]
 
     def process_inputs(self, inputs, outputs, parameters):
         d = cv.imread(parameters["path"])
+
         if d is not None:
             self.may_interrupt()
             outputs["output"] = Data(d)
@@ -20,13 +28,16 @@ class ImageSequenceLoader(InputElement):
     comment = "Loads a sequence of images from disk"
 
     def get_attributes(self):
-        return [], [Output("output", "Sequence")], [MultiPathParameter("paths", value=["images/lena.jpg"])]
+        return [],\
+               [Output("output", "Sequence")],\
+               [MultiPathParameter("paths", value=["images/lena.jpg"])]
 
     def process(self):
         paths = self.parameters["paths"].get()
         images = len(paths)
         sequence = Sequence([Data() for _ in range(images)])
         self.outputs["output"].put(sequence)
+
         for path, data in zip(paths, sequence):
             self.may_interrupt()
             image = cv.imread(path)
@@ -39,7 +50,9 @@ class ImageLoader3D(InputElement):
     comment = "Loads multiple images as 3D image"
 
     def get_attributes(self):
-        return [], [Output("output")], [MultiPathParameter("paths", value=["images/lena.jpg"]*10)]
+        return [],\
+               [Output("output")],\
+               [MultiPathParameter("paths", value=["images/lena.jpg"] * 10)]
 
     def process_inputs(self, inputs, outputs, parameters):
         paths = parameters["paths"]
@@ -49,8 +62,9 @@ class ImageLoader3D(InputElement):
             slice = cv.imread(path)
             self.may_interrupt()
             image.append(slice)
+
             if slice.shape != image[0].shape:
-                raise Exception("Inconsisten slice dimensions")
+                raise Exception("Inconsistent slice dimensions")
 
         image = np.array(image)
         outputs["output"] = Data(image)
@@ -58,7 +72,8 @@ class ImageLoader3D(InputElement):
 
 class RecurrentSequenceLoader(InputElement):
     name = "Image Recurrent Sequence loader"
-    comment = "Loads a recurrent sequence of images from disk (reflecting directory structure)"
+    comment = "Loads a recurrent sequence of images from disk" \
+              "(reflecting directory structure)"
 
     max_level = 5
 
@@ -67,17 +82,22 @@ class RecurrentSequenceLoader(InputElement):
         self.level = 0
 
     def get_attributes(self):
-        return [], [Output("output", "Sequences")], [DirectoryParameter("directory", value="images")]
+        return [],\
+               [Output("output", "Sequences")],\
+               [DirectoryParameter("directory", value="images")]
 
     def read_directory(self, directory):
         self.level += 1
         sequence = Sequence()
+
         for entry in os.listdir(directory):
             try:
-                if not entry or entry[0] == '.': continue
+                if not entry or entry[0] == '.':
+                    continue
                 path = directory + "/" + entry
                 if os.path.isdir(path):
-                    if self.level >= self.max_level: continue
+                    if self.level >= self.max_level:
+                        continue
                     sequence.value.append(self.read_directory(path))
                 else:
                     image = cv.imread(path)
@@ -112,10 +132,13 @@ class ArrayLoader(InputElement):
     comment = "Loads numpy array from disk"
 
     def get_attributes(self):
-        return [], [Output("output")], [PathParameter("path", value="images/default.npy")]
+        return [], \
+               [Output("output")], \
+               [PathParameter("path", value="images/default.npy")]
 
     def process_inputs(self, inputs, outputs, parameters):
         d = np.load(parameters["path"])
+
         if d is not None:
             self.may_interrupt()
             outputs["output"] = Data(d)

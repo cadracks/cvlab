@@ -67,6 +67,7 @@ names = {
 
 base_groups = json.load(open(os.path.dirname(__file__)+"/base_groups.json"))
 
+
 def get_groups():
     try:
         file = os.path.dirname(__file__) + "/typelist_groups.json"
@@ -89,11 +90,11 @@ def get_group(name):
         return base_groups[name]
 
     group = groups.get(name, None)
-    if not group: return None
+    if not group:
+        return None
     if group.lower() in names:
         group = names[group.lower()]
     else:
         group = "OpenCV: " + group
 
     return group
-

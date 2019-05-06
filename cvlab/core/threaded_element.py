@@ -1,3 +1,11 @@
+# coding: utf-8
+
+r"""Threaded element definition
+
+Element -> CoreElement -> ThreadedElement
+
+"""
+
 import time
 
 from .hooks import *
@@ -21,7 +29,8 @@ class ThreadedElement(CoreElement):
         self._worker.start()
         self.processing_time_info = None
 
-    def recalculate(self, refresh_parameters, refresh_structure, force_break, force_units_recalc=False):
+    def recalculate(self, refresh_parameters, refresh_structure, force_break,
+                    force_units_recalc=False):
         self.structure_changed |= refresh_structure
         self.parameters_changed |= refresh_parameters
         self._do_break |= force_break
@@ -42,7 +51,8 @@ class ThreadedElement(CoreElement):
         self.set_state(self.STATE_UNSET)
         while True:
             self._notifier.wait()
-            if self._do_abort: break
+            if self._do_abort:
+                break
             try:
                 self.set_state(self.STATE_BUSY)
                 start = time.clock()
@@ -51,7 +61,10 @@ class ThreadedElement(CoreElement):
                 self.may_interrupt()
                 end = time.clock()
                 previous_time_infos = self.get_previous_time_infos()
-                self.processing_time_info = ProcessingTimeInfo(start, end, len(self.units), previous_time_infos)
+                self.processing_time_info = ProcessingTimeInfo(start,
+                                                               end,
+                                                               len(self.units),
+                                                               previous_time_infos)
                 self.set_state(self.STATE_READY)
             except (InterruptException, ProcessingBreak):
                 pass
@@ -63,8 +76,9 @@ class ThreadedElement(CoreElement):
         time_infos = []
         for connector in self.inputs.values():
             for inpt in connector.connected_from:
-                if hasattr(inpt.parent, "processing_time_info"):    # fixme: ugly hack...
+
+                # fixme: ugly hack...
+                if hasattr(inpt.parent, "processing_time_info"):
                     time_infos.append(inpt.parent.processing_time_info)
+
         return time_infos
-
-

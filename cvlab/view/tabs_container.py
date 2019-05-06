@@ -1,3 +1,7 @@
+# coding: utf-8
+
+r"""Tabs container"""
+
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import *
 
@@ -10,7 +14,8 @@ class TabsContainer(QTabWidget):
         self.tab_manager = TabManager(self.tabBar())
         self.setTabShape(QTabWidget.Triangular)
         self.tabBar().setContextMenuPolicy(Qt.CustomContextMenu)
-        self.tabBar().customContextMenuRequested.connect(self.tab_manager.show_context_menu)
+        self.tabBar().customContextMenuRequested.connect(
+            self.tab_manager.show_context_menu)
 
 
 class TabManager:
@@ -32,18 +37,18 @@ class TabManager:
 
 
 def get_action(parent, action_type, idx):
-        if action_type == TabAction.CLOSE:
-            action = TabAction("Close", parent, idx)
-            action.triggered.connect(action.close_diagram)
-            return action
-        elif action_type == TabAction.SAVE:
-            action = TabAction("Save", parent, idx)
-            action.triggered.connect(action.save_diagram)
-            return action
-        elif action_type == TabAction.SAVE_AS:
-            action = TabAction("Save as...", parent, idx)
-            action.triggered.connect(action.save_diagram_as)
-            return action
+    if action_type == TabAction.CLOSE:
+        action = TabAction("Close", parent, idx)
+        action.triggered.connect(action.close_diagram)
+        return action
+    elif action_type == TabAction.SAVE:
+        action = TabAction("Save", parent, idx)
+        action.triggered.connect(action.save_diagram)
+        return action
+    elif action_type == TabAction.SAVE_AS:
+        action = TabAction("Save as...", parent, idx)
+        action.triggered.connect(action.save_diagram_as)
+        return action
 
 
 class TabAction(QAction):

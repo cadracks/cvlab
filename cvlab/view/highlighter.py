@@ -1,4 +1,8 @@
-from PyQt5.QtWidgets import *
+# coding: utf-8
+
+r"""UI Highlighter"""
+
+# from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 
 from pygments.formatter import Formatter

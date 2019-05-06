@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+r"""elements __init__"""
+
 import sys
 import importlib
 import os
@@ -14,12 +19,22 @@ all_elements = {}
 
 
 def element_name(name):
-    name = re.match(r"(cvlab[^.]*\.)?(diagram\.)?(elements\.)?(experimental\.|testing\.|custom\.)?(.+)", name).group(5)
+    r"""Get the element name
+
+    Returns
+    -------
+    str
+
+    """
+    name = re.match(r"(cvlab[^.]*\.)?(diagram\.)?(elements\.)?(experimental\.|testing\.|custom\.)?(.+)",
+                    name).group(5)
     return name
 
 
 def register_elements(package, elements, sort_key=999):
+    r"""Register elements"""
     sort_keys[package] = min(sort_key, sort_keys[package])
+
     for element in elements:
         element_package = getattr(element, "package", None) or package
         module = element.__module__
@@ -27,15 +42,23 @@ def register_elements(package, elements, sort_key=999):
         name = module + "." + classname
         registered_elements[element_package].append(element)
         all_elements[element_name(name)] = element
-        sort_keys[element_package] = min(sort_keys[element_package], sort_key + 100)
+        sort_keys[element_package] = min(sort_keys[element_package],
+                                         sort_key + 100)
 
 
 def register_elements_auto(module_name, module_locals, package, sort_key=999):
-    elements = [cls for cls in module_locals.values() if isinstance(cls, type) and cls.__module__ == module_name and hasattr(cls, "name")]
+    r"""Automatic elements registration"""
+    elements = [cls
+                for cls
+                in module_locals.values()
+                if isinstance(cls, type)
+                and cls.__module__ == module_name
+                and hasattr(cls, "name")]
     return register_elements(package, elements, sort_key)
 
 
 def get_sorted_elements():
+    r"""Sorted elements list"""
     return sorted(registered_elements.items(), key=lambda kv: sort_keys[kv[0]])
 
 
@@ -49,16 +72,38 @@ def get_element_fallback(name):
 
 
 def get_element(name):
+    r"""Retrieve an element
+
+    Returns
+    -------
+    Element
+
+    """
     name = element_name(name)
     element = all_elements.get(name, None)
-    if not element: element = get_element_fallback(name)
+    if not element:
+        element = get_element_fallback(name)
     return element
 
 
 def available_modules(path):
+    r"""List of available modules
+
+    Parameters
+    ----------
+    path : str
+
+    Returns
+    -------
+    list
+
+    """
     modules = []
     dir = os.path.realpath(path)
-    if not os.path.isdir(dir): dir = os.path.dirname(dir)
+
+    if not os.path.isdir(dir):
+        dir = os.path.dirname(dir)
+
     for entry in os.listdir(dir):
         if entry == '__init__.py':
             continue
@@ -73,6 +118,7 @@ def available_modules(path):
 
 
 def load_modules(modules, package):
+    r"""Load modules"""
     for module in modules:
         if module in ignored_modules:
             print("Ignoring module:", module)
@@ -87,13 +133,23 @@ def load_modules(modules, package):
 
 
 def load_plugins():
+    r"""Load plugins"""
     for path in sys.path:
-        if not os.path.isdir(path): continue
+        if not os.path.isdir(path):
+            continue
+
         for module in os.listdir(path):
-            if not module.startswith("cvlab_"): continue
+            if not module.startswith("cvlab_"):
+                continue
+
             module_path = path + "/" + module
-            if os.path.isdir(module_path) and not os.path.isfile(module_path + "/__init__.py"): continue
-            if module in sys.modules: continue
+
+            if os.path.isdir(module_path) and not os.path.isfile(module_path + "/__init__.py"):
+                continue
+
+            if module in sys.modules:
+                continue
+
             try:
                 print("Loading plugin:", module)
                 importlib.import_module(module)
@@ -102,12 +158,13 @@ def load_plugins():
 
 
 def load_auto(path):
+    r"""Automated loading"""
     modules = available_modules(path)
     package = path.replace("\\","/")
     package = package[package.index("cvlab"):]
     package = re.sub(r"/__init__\.py.*", "", package)
     package = package.replace("/",".")
-    package = package.replace("cvlab.cvlab","cvlab")
+    package = package.replace("cvlab.cvlab", "cvlab")
     load_modules(modules, package)
 
 

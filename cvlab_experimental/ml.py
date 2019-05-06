@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+r"""Machine learning"""
+
 import numpy as np
 
 from cvlab.diagram.elements.base import *
@@ -18,11 +23,14 @@ def round_05(data, middle, classes_count=2):
         d1, d2 = 0.5, 0
 
     ret = data * 0
-    for c in range(classes_count - 1):  # todo: dla duzej liczby klas to bedzie meeega wolne...
+
+    # todo: for a large number of classes it will be meeega free ...
+    for c in range(classes_count - 1):
         ret += c * np.logical_and(data >= c - d1, data < c + d1)
         if middle:
             c += 0.5
             ret += c * np.logical_and(data >= c - d2, data < c + d2)
+
     ret += (classes_count - 1) * (data >= classes_count - 1 - d1)
     return ret
 
@@ -37,22 +45,42 @@ class Trainable(NormalElement):
     def predict_all(self, vvv):
         return [self.predict(v) for v in vvv]
 
-    # TODO: to wszystko tutaj jest DO BANI. Trzeba przedyskutowac i zmienic, bo jest za duzo mozliwosci aktualnie.
-    # jachoo: moja sugestia - przerobic WSZYSTKIE klasyfikatory na wielowyjsciowe (czyli zamiast numerow klas zeby byly
-    #         zawsze prawdopodobienstwa. To uprosci BARDZO liczenie wynikow procentowych itp.
-    #         sa dwa minusy w takim wypadku: utrata spojnosci z bibliotekami i troche wieksze zuzycie pamieci
+    # TODO: it's all BANJA here. You have to discuss and change, because
+    #       there is too much opportunity at the moment.
+    # jachoo: my suggestion - convert ALL classifiers to multi-mode
+    # (that is, instead of class numbers to be
+    #  always probabilities. It will get VERY counting of percentages, etc.
+    #  there are two disadvantages in this case: loss of liaison with libraries
+    #  and a little more memory consumption
 
     # scoring defs
-    TYPE_CLASSES = 0  # klasy numerowane od 0
-    TYPE_CLASSES_WITH_MIDDLE = 1  # j.w. oraz odpowiedz "cos pomiedzy" (wartosci 0.5, 1.5 itd.)
-    TYPE_REAL_CENTER_0 = 2  # wyniki bedace liczbami rzeczywistymi typowo od -1 do 1
-    TYPE_REAL_CENTER_0_WITH_MIDDLE = 3  # j.w. oraz odpowiedz "cos pomiedzy" (wartosci bliskie 0)
-    TYPE_REAL_CENTER_05 = 4  # wyniki bedace liczbami rzeczywistymi typowo od 0 do 1
-    TYPE_REAL_CENTER_05_WITH_MIDDLE = 5  # j.w. oraz odpowiedz "cos pomiedzy" (wartosci bliskie 0.5)
+
+    # classes numbered from 0
+    TYPE_CLASSES = 0
+
+    # Ibid and answer "something in between" (values ​​0.5, 1.5, etc.)
+    TYPE_CLASSES_WITH_MIDDLE = 1
+
+    # results are real numbers typically -1 to 1
+    TYPE_REAL_CENTER_0 = 2
+
+    # Ibid and answer "something in between" (values ​​close to 0)
+    TYPE_REAL_CENTER_0_WITH_MIDDLE = 3
+
+    # results are real numbers typically from 0 to 1
+    TYPE_REAL_CENTER_05 = 4
+
+    # j.w. and answer "something in between" (values ​​close to 0.5)
+    TYPE_REAL_CENTER_05_WITH_MIDDLE = 5
 
     # cross-validation defs
-    CV_SIMPLE = 0  # zbiory sa budowane po kolei (pierwsze n/k elementow do pierwszego zbioru itd.)
-    CV_STEPPED = 1  # zbiory sa budowane co k elementow (rownomierny podzial danych z calego zbioru wejsciowego)
+
+    # the sets are built one by one (first n / k elements to
+    # the first set, etc.)
+    CV_SIMPLE = 0
+    # collections are built every k elements (equal distribution of data from
+    # the entire input file)
+    CV_STEPPED = 1
 
     output_type = TYPE_CLASSES
     classes_count = 2
@@ -82,8 +110,9 @@ class Trainable(NormalElement):
 
     @staticmethod
     def format_scores(errors, valid, valid_total, sample_count):
-        return "errors: " + str(errors) + " valid: " + str(valid) + " total: " + str(valid_total) + " samples: " + str(
-            sample_count)
+        return "errors: " + str(errors) + " valid: " + str(valid) \
+               + " total: " + str(valid_total) + " samples: " \
+               + str(sample_count)
 
     def score(self, predicted, real):
         error = abs(predicted - real)
@@ -104,16 +133,21 @@ class Trainable(NormalElement):
         return error, valid
 
     def cross_validate(self, train_data, responses, sample_weights, k):
-        if k <= 0: raise ValueError("Parameter k must be positive")
+        if k <= 0:
+            raise ValueError("Parameter k must be positive")
         outputs = np.alen(responses[0])
-        errors, valid, valid_total, total_count = np.zeros(outputs), np.zeros(outputs), 0, 0
+        errors, valid, valid_total, total_count = \
+            np.zeros(outputs), np.zeros(outputs), 0, 0
         samples = train_data.shape[0]
-        if k == 1: k = samples
+        if k == 1:
+            k = samples
         cv_step = samples / float(k)
         cv_actual = 0
         for i in range(k):
             if self.cv_type == Trainable.CV_SIMPLE:
-                testing_ids = list(range(int(cv_actual), min(int(cv_actual + cv_step), samples)))
+                testing_ids = list(range(int(cv_actual),
+                                         min(int(cv_actual + cv_step),
+                                             samples)))
                 cv_actual += cv_step
             else:
                 testing_ids = list(range(i, samples, k))
@@ -138,9 +172,12 @@ class Trainable(NormalElement):
         if not cv_k:
             cv_scores = None
         else:
-            cv_scores = self.cross_validate(train_data, responses, sample_weights, cv_k)
+            cv_scores = self.cross_validate(train_data,
+                                            responses,
+                                            sample_weights,
+                                            cv_k)
 
-        # todo: dorobic liste blednych rozpoznan (?)
+        # todo: make a list of incorrect diagnoses (?)
 
         self.train(train_data, responses, sample_weights)
         train_score = self.score_all(self.predict_all(train_data), responses)

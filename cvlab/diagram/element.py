@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+r"""Element"""
+
 import threading
 from collections import OrderedDict
 
@@ -51,7 +56,7 @@ class Element:
         self.parameters = OrderedDict()
         for i in parameters:
             assert isinstance(i, Parameter)
-            #i.parent_element = self
+            # i.parent_element = self
             i.value_changed.connect(self.parameter_changed)
             self.parameters[i.id] = i
 
@@ -64,13 +69,17 @@ class Element:
     def parameter_changed(self):
         self.recalculate(True, False, True)
 
-    #logic methods
+    # logic methods
 
     def recalculate(self, refresh_parameters, refresh_structure, force_break):
         """
-        Informs that something has changed, and the element must re-do the calculations.
-        If force_break=True, then it also forces element to break and cancel current calculations.
-        If recal_structure=True, the it also recreates the structure of processing (necessary when Sequences are changed od elements are [dis]connected)
+        Informs that something has changed, and the element
+        must re-do the calculations.
+        If force_break=True, then it also forces element to break
+        and cancel current calculations.
+        If recal_structure=True, the it also recreates the structure of
+        processing (necessary when Sequences are changed od elements
+        are [dis]connected)
         """
         print("recalculate.")
 
@@ -108,24 +117,23 @@ class Element:
         self.notify_state_changed()
 
     def to_json(self):
-        return {
-            "_type": "element",
-            "class": self.__class__.__name__,
-            "module": self.__module__,
-            "parameters": self.parameters,
-            "unique_id": self.unique_id
-        }
+        return {"_type": "element",
+                "class": self.__class__.__name__,
+                "module": self.__module__,
+                "parameters": self.parameters,
+                "unique_id": self.unique_id}
 
     def from_json(self, data):
         if "unique_id" in data:
             self.unique_id = data["unique_id"]
+
         for param, value in data["parameters"].items():
             if param in self.parameters:
                 self.parameters[param].from_json(value)
+
         self.recalculate(True, True, True)
 
-
-    #gui methods
+    # gui methods
 
     def notify_state_changed(self):
         """

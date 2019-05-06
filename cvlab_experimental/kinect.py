@@ -1,5 +1,12 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+r"""Kinect"""
+
 import os
-if os.name != 'nt': raise ImportError("Kinect module only work on Windows")
+
+if os.name != 'nt':
+    raise ImportError("Kinect module only work on Windows")
 
 from datetime import datetime, timedelta, time
 from threading import Event
@@ -17,7 +24,11 @@ class Kinect(NormalElement):
     def __init__(self):
         super(Kinect, self).__init__()
         self.last_frame_time = datetime.now()
-        self.play = Event()  # todo: ladowanie tego powinno byc z parametru - zapamietywane przy zapisie/odczycie
+
+        # todo: loading this should be from the parameter - memorized when
+        #       saving / reading
+        self.play = Event()
+
         self.play.set()
         self.last_parameters = None
         self.kinect = None
@@ -35,8 +46,10 @@ class Kinect(NormalElement):
         return [], \
                [Output("color"), Output("depth")], \
                [IntParameter("device", value=0, min_=0, max_=10),
-                ComboboxParameter("color res", [("640x480", 0), ("1280x960", 1)]),
-                ComboboxParameter("depth res", [("640x480", 0), ("320x240", 1)]),
+                ComboboxParameter("color res",
+                                  [("640x480", 0), ("1280x960", 1)]),
+                ComboboxParameter("depth res",
+                                  [("640x480", 0), ("320x240", 1)]),
                 FloatParameter("fps", value=15, min_=0.1, max_=120),
                 ButtonParameter("pause", self.playpause, "Play / Pause")]
 
@@ -58,10 +71,12 @@ class Kinect(NormalElement):
             if self.kinect is not None:
                 self.kinect.close()
                 self.kinect = None
+
             try:
                 self.kinect = nui.Runtime(index=self.parameters["device"].get())
             except:
                 raise Exception("Device not connected or Microsoft Kinect SDK missing")
+
             self.kinect.video_frame_ready += self.video_frame_ready
             self.kinect.depth_frame_ready += self.depth_frame_ready
 
@@ -70,14 +85,20 @@ class Kinect(NormalElement):
                 res = nui.ImageResolution.Resolution640x480
             else:
                 res = nui.ImageResolution.Resolution1280x1024
-            self.kinect.video_stream.open(nui.ImageStreamType.Video, 2, res, nui.ImageType.Color)
+            self.kinect.video_stream.open(nui.ImageStreamType.Video,
+                                          2,
+                                          res,
+                                          nui.ImageType.Color)
 
             depth_resolution = self.parameters["depth res"].get()
             if depth_resolution == 0:
                 res = nui.ImageResolution.Resolution640x480
             else:
                 res = nui.ImageResolution.Resolution320x240
-            self.kinect.depth_stream.open(nui.ImageStreamType.Depth, 2, res, nui.ImageType.Depth)
+            self.kinect.depth_stream.open(nui.ImageStreamType.Depth,
+                                          2,
+                                          res,
+                                          nui.ImageType.Depth)
 
         if self.kinect is not None:
             while True:
@@ -118,7 +139,9 @@ class Kinect(NormalElement):
         depth = None
         with self.kinect_color_lock:
             with self.kinect_depth_lock:
-                if self.color_image is not None and self.depth_image is not None and self.timestamps_ok():
+                if self.color_image is not None \
+                        and self.depth_image is not None \
+                        and self.timestamps_ok():
                     # copy with eliminating mirroring
                     color = self.color_image[:, ::-1, :]
                     depth = self.depth_image[:, ::-1]
@@ -130,7 +153,10 @@ class Kinect(NormalElement):
         if update:
             self.may_interrupt()
             self.set_state(Element.STATE_BUSY)
-            if color is not None and len(color) > 0 and depth is not None and len(depth) > 0:
+            if color is not None \
+                    and len(color) > 0 \
+                    and depth is not None \
+                    and len(depth) > 0:
                 self.outputs["color"].put(Data(color))
                 self.outputs["depth"].put(Data(depth))
                 self.last_frame_time = datetime.now()
@@ -177,4 +203,3 @@ class Kinect(NormalElement):
 
 
 register_elements_auto(__name__, locals(), "Kinect", 10)
-

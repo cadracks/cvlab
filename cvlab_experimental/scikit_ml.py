@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+r"""Scikit ML"""
+
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.naive_bayes import BernoulliNB
 from sklearn.naive_bayes import GaussianNB
@@ -18,10 +23,8 @@ class ScikitSimpleTrainable(Trainable):
         pass
 
     def get_attributes(self):
-        return [Input("train data"),
-                Input("responses")], \
-               [Output("model"),
-                Output("log")], \
+        return [Input("train data"), Input("responses")], \
+               [Output("model"), Output("log")], \
                []
 
     def process_inputs(self, inputs, outputs, parameters):
@@ -139,4 +142,3 @@ class RandomForestTrain(ScikitSimpleTrainable):
 
 
 register_elements_auto(__name__, locals(), "Machine learning - scikit", 12)
-

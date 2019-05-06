@@ -1,3 +1,7 @@
+# coding: utf-8
+
+r"""UI elements"""
+
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QApplication
 
@@ -5,7 +9,8 @@ from ..diagram import code_generator
 from ..diagram.element import Element
 from .parameters import *
 from .mimedata import Mime
-from .widgets import InOutConnector, ElementStatusBar, PreviewsContainer, StyledWidget
+from .widgets import InOutConnector, ElementStatusBar, PreviewsContainer, \
+    StyledWidget
 from .wires import NO_FOREGROUND_WIRES
 
 
@@ -46,8 +51,11 @@ class GuiElement(Element, StyledWidget):
 
     def set_workarea(self, workarea):
         self.workarea = workarea
-        for connector in list(self.input_connectors.values()) + list(self.output_connectors.values()):
+
+        for connector in list(self.input_connectors.values()) + \
+                         list(self.output_connectors.values()):
             connector.set_workarea(workarea)
+
         self.recreate_group_actions()
 
     def create_label(self, layout):
@@ -55,8 +63,13 @@ class GuiElement(Element, StyledWidget):
             self.label = QLabel("{} #{}".format(self.name, self.unique_id))
         else:
             self.label = QLabel("{}".format(self.name))
+
         self.label.setObjectName("ElementLabel")
-        self.label.setMinimumWidth(100)  # workaround for drag problems - with pixmap width < 100 and adjusted HotSpot
+
+        # workaround for drag problems
+        # - with pixmap width < 100 and adjusted HotSpot
+        self.label.setMinimumWidth(100)
+
         layout.addWidget(self.label)
 
     def create_params(self, container):
@@ -78,7 +91,8 @@ class GuiElement(Element, StyledWidget):
                 layout.addLayout(GuiFloatParameter(param, self))
             elif isinstance(param, ComboboxParameter):
                 layout.addLayout(GuiComboboxParameter(param, self))
-            elif isinstance(param, SizeParameter) or isinstance(param, PointParameter):
+            elif isinstance(param, SizeParameter) or isinstance(param,
+                                                                PointParameter):
                 layout.addLayout(GuiMultiNumberParameter(param, self, 2, int))
             elif isinstance(param, ScalarParameter):
                 layout.addLayout(GuiMultiNumberParameter(param, self, 4, float))
@@ -180,16 +194,24 @@ class GuiElement(Element, StyledWidget):
     def gen_code_action(self):
         code = code_generator.generate(self)
         QApplication.instance().clipboard().setText(code)
-        msg = QMessageBox(QMessageBox.Information, "Code copied",
-                                "Code copied to system clipboard.\n\n" + code[:200] + "...", QMessageBox.Ok, self)
+        msg = QMessageBox(QMessageBox.Information,
+                          "Code copied",
+                          "Code copied to system clipboard.\n\n" + code[:200]
+                          + "...",
+                          QMessageBox.Ok,
+                          self)
         msg.setModal(True)
         msg.show()
 
     @pyqtSlot()
     def switch_params(self, value=None):
-        if not self.params: return
-        if value is None: value = not self.params.isVisible()
+        if not self.params:
+            return
+        if value is None:
+            value = not self.params.isVisible()
+
         self.params.setVisible(value)
+
         for action in self.actions():
             if action.text() == 'Show p&arams':
                 action.setChecked(value)
@@ -197,6 +219,7 @@ class GuiElement(Element, StyledWidget):
     @pyqtSlot()
     def switch_preview(self, value=None):
         self.preview.switch_visibility(value)
+
         for action in self.actions():
             if action.text() == 'Show &preview':
                 action.setChecked(self.preview.isVisible())
@@ -205,22 +228,26 @@ class GuiElement(Element, StyledWidget):
     def switch_sliders(self, value=None):
         if not self.param_sliders:
             return
-        if value is None: value = not self.param_sliders[0].isVisible()
+        if value is None:
+            value = not self.param_sliders[0].isVisible()
+
         for slider in self.param_sliders:
             slider.setVisible(value)
+
         for action in self.actions():
             if action.text() == 'Show &sliders':
                 action.setChecked(value)
 
     @pyqtSlot()
     def break_connections(self):
-        if not self.parameters: return
+        if not self.parameters:
+            return
         for par in list(self.parameters.values()):
             par.disconnect_all_children()
 
     @pyqtSlot()
     def selfdestroy(self):
-        #TODO: do we need this here or somewhere else?
+        # TODO: do we need this here or somewhere else?
         self.diagram.delete_element(self)
 
     def mousePressEvent(self, e):
@@ -258,18 +285,22 @@ class GuiElement(Element, StyledWidget):
             return
         if e.buttons() & QtCore.Qt.LeftButton:
             self.workarea.on_element_moused_left_moved(self, e)
-            #self.show_hints()
+            # self.show_hints()
 
     def show_hints(self):
-        if self.hints_shown: return
+        if self.hints_shown:
+            return
         self.hints_shown = True
-        for i in list(self.input_connectors.values()) + list(self.output_connectors.values()):
+        for i in list(self.input_connectors.values()) \
+                 + list(self.output_connectors.values()):
             i.show_hint()
 
     def hide_hints(self):
-        if not self.hints_shown: return
+        if not self.hints_shown:
+            return
         self.hints_shown = False
-        for i in list(self.input_connectors.values()) + list(self.output_connectors.values()):
+        for i in list(self.input_connectors.values()) \
+                 + list(self.output_connectors.values()):
             i.hide_hint()
 
     def enterEvent(self, e):
@@ -280,12 +311,18 @@ class GuiElement(Element, StyledWidget):
             self.hide_hints()
 
     def forward_event_to_io_connector(self, name, event):
-        if event.mimeData().text() == Mime.INCOMING_CONNECTION and self.input_connectors:
-            connector = self.find_nearest_connector(event, list(self.input_connectors.values()))
+        if event.mimeData().text() == Mime.INCOMING_CONNECTION \
+                and self.input_connectors:
+            connector = \
+                self.find_nearest_connector(event,
+                                            list(self.input_connectors.values()))
             method_to_call = getattr(connector, name)
             method_to_call(event)
-        elif event.mimeData().text() == Mime.OUTGOING_CONNECTION and self.output_connectors:
-            connector = self.find_nearest_connector(event, list(self.output_connectors.values()))
+        elif event.mimeData().text() == Mime.OUTGOING_CONNECTION \
+                and self.output_connectors:
+            connector = \
+                self.find_nearest_connector(event,
+                                            list(self.output_connectors.values()))
             method_to_call = getattr(connector, name)
             method_to_call(event)
 
@@ -303,39 +340,53 @@ class GuiElement(Element, StyledWidget):
         self.forward_event_to_io_connector(self.dropEvent.__name__, e)
 
     def dragMoveEvent(self, e):
-        #todo: fix shifted wire when to connectors of the same element are to be connected
+        # todo: fix shifted wire when to connectors of the same element
+        #  are to be connected
         self.forward_event_to_io_connector(self.dragMoveEvent.__name__, e)
 
     def notify_state_changed(self):
         if not self.state_notified:
             self.state_notified = True
-            # We need to use a signal here since the method is called by a worker thread and we need to alter the GUI
+            # We need to use a signal here since the method is called by a
+            # worker thread and we need to alter the GUI
             self.state_changed.emit()
 
     def duplicate(self):
         el = self.__class__()
         pos = (self.pos().x() + 20, self.pos().y() + 20)
         self.diagram.add_element(el, pos)
-        for my, his in zip(list(self.parameters.values()), list(el.parameters.values())):
+
+        for my, his in zip(list(self.parameters.values()),
+                           list(el.parameters.values())):
             my.connect_child(his)
             his.connect_child(my)
-        for my, his in zip(list(self.inputs.values()), list(el.inputs.values())):
+
+        for my, his in zip(list(self.inputs.values()),
+                           list(el.inputs.values())):
             for outp in my.connected_from:
                 self.diagram.connect_io(his, outp)
+
         if self.params:
             el.switch_params(self.params.isVisible())
+
         if self.param_sliders:
             el.switch_sliders(self.param_sliders[0].isVisible())
+
         el.switch_preview(self.preview.isVisible())
 
     def to_json(self):
         parent_d = Element.to_json(self)
         d = {
-            "show_parameters": (self.params.isVisible() if self.params else None),
-            "show_sliders": (self.param_sliders[0].isVisible() if self.param_sliders else None),
-            "show_preview": (self.preview.isVisible() if self.preview else None),
-            "position": (self.pos().x(), self.pos().y()),
-            "preview_size": self.preview.preview_size,
+            "show_parameters":
+                (self.params.isVisible() if self.params else None),
+            "show_sliders":
+                (self.param_sliders[0].isVisible() if self.param_sliders else None),
+            "show_preview":
+                (self.preview.isVisible() if self.preview else None),
+            "position":
+                (self.pos().x(), self.pos().y()),
+            "preview_size":
+                self.preview.preview_size,
         }
         parent_d["gui_options"] = d
         return parent_d
@@ -357,13 +408,16 @@ class GuiElement(Element, StyledWidget):
     def zoom(self, factor, origin):
         assert isinstance(self.preview, PreviewsContainer)
 
-        # fixme: this is not accurate (elements are zoomed by top-left position, sizes and positions are integers...)
+        # fixme: this is not accurate
+        #  (elements are zoomed by top-left position, sizes
+        #  and positions are integers...)
 
         factor = float(factor)
         origin_x, origin_y = origin
 
-        x, y = self.workarea.nearest_grid_point((self.x() - origin_x) * factor + origin_x,
-                                                (self.y() - origin_y) * factor + origin_y)
+        x, y = self.workarea.nearest_grid_point(
+            (self.x() - origin_x) * factor + origin_x,
+            (self.y() - origin_y) * factor + origin_y)
         self.move(x, y)
 
         self.preview.resize_previews(self.preview.preview_size * factor)
@@ -390,7 +444,7 @@ class FunctionGuiElement(GuiElement):
 
         w_params = QWidget()
         w_params.setLayout(vb_params)
-        vb_params.setContentsMargins(0,0,0,0)
+        vb_params.setContentsMargins(0, 0, 0, 0)
 
         self.create_label(hb_label)
         self.create_params(w_params)
@@ -416,8 +470,10 @@ class FunctionGuiElement(GuiElement):
         self.create_break_action()
         self.create_del_action()
         self.create_code_action()
-        #self.setFocusPolicy(QtCore.Qt.ClickFocus + QtCore.Qt.TabFocus)
-        #self.setAttribute(QtCore.Qt.WA_MacShowFocusRect, 1)     # enable showing focus on a Mac
+        # self.setFocusPolicy(QtCore.Qt.ClickFocus + QtCore.Qt.TabFocus)
+
+        # enable showing focus on a Mac
+        # self.setAttribute(QtCore.Qt.WA_MacShowFocusRect, 1)
 
 
 class OperatorGuiElement(GuiElement):
@@ -461,7 +517,7 @@ class InputGuiElement(GuiElement):
 
         w_params = QWidget()
         w_params.setLayout(vb_params)
-        vb_params.setContentsMargins(0,0,0,0)
+        vb_params.setContentsMargins(0, 0, 0, 0)
 
         self.create_label(vb_main)
         self.create_params(w_params)
@@ -480,4 +536,3 @@ class InputGuiElement(GuiElement):
         self.create_duplicate_action()
         self.create_break_action()
         self.create_del_action()
-

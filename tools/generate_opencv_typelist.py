@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# coding: utf-8
+
 import json
 import os
 import re
@@ -7,7 +10,7 @@ from glob import glob
 
 class TypeDef:
     def __init__(self, name="", type="", args=None, namespace=""):
-        self.name = name if name not in ("from","import","def") else name + "_"
+        self.name = name if name not in ("from", "import", "def") else name + "_"
         self.type = type
         self.args = args or []
         self.namespace = namespace
@@ -47,18 +50,32 @@ class TypeDef:
         from gen2 import ArgInfo
         assert isinstance(arg, ArgInfo)
         type = TypeDef(arg.name)
-        if arg.tp in ("Mat","Array","vector_Mat","vector_int","vector_float","vector_Point","vector_Rect","vector_uchar"): type.type = "mat"
-        elif arg.tp in ("Size",): type.type = "size"
-        elif arg.tp in ("int","long","long int","size_t"): type.type = "int"
-        elif arg.tp in ("double","float","long double"): type.type = "float"
-        elif arg.tp in ("Point","Point2i"): type.type = "point"
-        elif arg.tp in ("Point2f","Point2d"): type.type = "point_float"
-        elif arg.tp in ("Scalar",): type.type = "scalar"
-        elif arg.tp in ("bool",): type.type = "bool"
-        elif arg.tp in ("String","string"): type.type = "str"
-        elif arg.tp in ("Rect",): type.type = "rect"
-        elif arg.tp in ("RotatedRect",): type.type = "rect_rotated"
-        elif arg.tp in ("TermCriteria",): type.type = "term_criteria"
+        if arg.tp in ("Mat", "Array", "vector_Mat", "vector_int",
+                      "vector_float", "vector_Point", "vector_Rect",
+                      "vector_uchar"):
+            type.type = "mat"
+        elif arg.tp in ("Size",):
+            type.type = "size"
+        elif arg.tp in ("int", "long", "long int", "size_t"):
+            type.type = "int"
+        elif arg.tp in ("double", "float", "long double"):
+            type.type = "float"
+        elif arg.tp in ("Point", "Point2i"):
+            type.type = "point"
+        elif arg.tp in ("Point2f", "Point2d"):
+            type.type = "point_float"
+        elif arg.tp in ("Scalar",):
+            type.type = "scalar"
+        elif arg.tp in ("bool",):
+            type.type = "bool"
+        elif arg.tp in ("String", "string"):
+            type.type = "str"
+        elif arg.tp in ("Rect",):
+            type.type = "rect"
+        elif arg.tp in ("RotatedRect",):
+            type.type = "rect_rotated"
+        elif arg.tp in ("TermCriteria",):
+            type.type = "term_criteria"
 
         if type.type:
             print("DEBUG Argument type:", arg.name, "[", arg.tp, "] ->", type.type)
@@ -86,17 +103,19 @@ def get_typelist(headers):
     groups = {}
 
     for header in sorted(headers):
-        header = header.replace("\\","/")
+        header = header.replace("\\", "/")
 
         print("INFO Processing header file:", header)
-        if not header or not os.path.exists(header): continue
+        if not header or not os.path.exists(header):
+            continue
 
         group = "modules/" + re.match(r".*/modules/(.+)", header).group(1)
         # group = group_map.get(group, None)
 
         for declaration in parser.parse(header):
             function = TypeDef.from_declaration(declaration)
-            if not function: continue
+            if not function:
+                continue
 
             if function.type == "func":
                 namespaces[function.name] = function.namespace
@@ -120,7 +139,7 @@ def doxygen_groups(build_dir):
     for file in sorted(glob(dir + "/*/*/group*.html")):
         try:
             html = open(file).read()
-            html = bs4.BeautifulSoup(html,features="lxml")
+            html = bs4.BeautifulSoup(html, features="lxml")
 
             title = html.select_one(".title")
             group = title.contents[0].strip()
@@ -137,10 +156,11 @@ def doxygen_groups(build_dir):
             functions = html.select_one("a[name=func-members]").parent.parent.parent.parent.select("tr .memItemRight")
             for function in functions:
                 fname = function.select_one("a.el").text.strip()
-                fname = fname.replace("cv::","")
-                fname = fname.replace("::",".")
-                fname = re.sub(r"<[^>]*>","",fname)
-                if "operator" in fname: continue
+                fname = fname.replace("cv::", "")
+                fname = fname.replace("::", ".")
+                fname = re.sub(r"<[^>]*>", "", fname)
+                if "operator" in fname:
+                    continue
                 fname = fname.lower()
 
                 print("DEBUG Function:", fname)

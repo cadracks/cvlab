@@ -1,3 +1,7 @@
+# coding: utf-8
+
+r"""Updater class definition"""
+
 import os
 import sys
 from threading import Thread
@@ -18,7 +22,8 @@ class Updater:
         pypi = ServerProxy(self.pypi_url)
         versions = pypi.package_releases(package_name)
 
-        if not versions: raise Exception("There are no available releases on PyPI")
+        if not versions:
+            raise Exception("There are no available releases on PyPI")
 
         versions = map(parse_version, versions)
         newest_version = max(versions)
@@ -29,7 +34,9 @@ class Updater:
             return False, act_version
 
     def check_async(self, callback):
-        thread = Thread(name="Updater thread", target=self._check_async, args=[callback])
+        thread = Thread(name="Updater thread",
+                        target=self._check_async,
+                        args=[callback])
         thread.setDaemon(True)
         thread.start()
 
@@ -41,6 +48,7 @@ class Updater:
             print("WARNING: Cannot get update information:", e)
 
     def update_command(self):
+        r"""Get the update command based on local context"""
         cvlab_dir = os.path.normpath(os.path.abspath(__file__) + "/../..")
 
         # inside git repo?
@@ -65,4 +73,3 @@ class Updater:
 
         # general
         return "pip3 install --upgrade cvlab"
-

@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# coding: utf-8
+
 import inspect
 import json
 import os
@@ -83,29 +86,41 @@ class Argument:
             self.type = ENUM
             self.enum = self.auto_constants()
             self.multi_enum = True
-        elif name in ("interpolation","bordermode","bordertype","ddepth","dtype","code","linetype","norm_type") or (name == "type" and self.function == "threshold"):
+        elif name in ("interpolation", "bordermode", "bordertype", "ddepth",
+                      "dtype", "code", "linetype", "norm_type") \
+                or (name == "type" and self.function == "threshold"):
             self.type = ENUM
             self.enum = self.auto_constants()
             self.multi_enum = False
-        elif name in ("size","dsize") or "size" in name:
+        elif name in ("size", "dsize") or "size" in name:
             self.type = SIZE
-        elif name in ("point","center","anchor","pt1","pt2","pt3","pt4","org"):
+        elif name in ("point", "center", "anchor", "pt1", "pt2", "pt3", "pt4",
+                      "org"):
             self.type = POINT
-        elif name in ("count","dx","dy","thickness") or "radius" in name or "iteration" in name or "iters" in name:
+        elif name in ("count", "dx", "dy", "thickness") \
+                or "radius" in name \
+                or "iteration" in name or "iters" in name:
             self.type = INT
             self.min = 0
-        elif name in ("maxval","minval","angle","scale") or "thresh" in name \
-            or "sigma" in name or "alpha" in name or "gamma" in name or "beta" in name or "scale" in name:
+        elif name in ("maxval", "minval", "angle", "scale") or "thresh" in name \
+                or "sigma" in name \
+                or "alpha" in name \
+                or "gamma" in name \
+                or "beta" in name \
+                or "scale" in name:
             self.type = FLOAT
-        elif name in ("bordervalue","color"):
+        elif name in ("bordervalue", "color"):
             self.type = SCALAR
         elif name in ("l2gradient",):
             self.type = BOOL
-        elif "name" in name or name in ("text","string"):
+        elif "name" in name or name in ("text", "string"):
             self.type = STRING
         elif self.function.lower() + ":" + name.lower() in self.typelist:
             self.type = self.typelist[self.function.lower() + ":" + name.lower()]
-            print("DEBUG Reading type from typelist:", self.function, self.name, self.type)
+            print("DEBUG Reading type from typelist:",
+                  self.function,
+                  self.name,
+                  self.type)
 
         if name in ("radius",):
             self.min = 1
@@ -166,7 +181,8 @@ class Argument:
                         self.all_constants(prefix, consts)
 
         if self.name in ("ddepth", "dtype"):
-            consts = dict(filter(lambda kv: not kv[0].startswith("CV_FEAT"), consts.items()))
+            consts = dict(filter(lambda kv: not kv[0].startswith("CV_FEAT"),
+                                 consts.items()))
 
         return consts
 
@@ -180,8 +196,10 @@ class Argument:
     def source_param(self):
 
         minmax = ""
-        if self.min is not None: minmax += ", min_={self.min}".format(**locals())
-        if self.max is not None: minmax += ", max_={self.max}".format(**locals())
+        if self.min is not None:
+            minmax += ", min_={self.min}".format(**locals())
+        if self.max is not None:
+            minmax += ", max_={self.max}".format(**locals())
 
         if self.type == INT:
             return "IntParameter('{self.name}', '{self.nice_name}'{minmax})".format(**locals())
@@ -197,22 +215,31 @@ class Argument:
             return "ScalarParameter('{self.name}', '{self.nice_name}'{minmax})".format(**locals())
         if self.type == ENUM:
             if not self.enum: raise Exception("No values given for enum")
-            values = ["('" + name + "'," + repr(value) + ")" for name, value in sorted(self.enum.items(), key=lambda kv: kv[1])]
+            values = ["('" + name + "'," + repr(value) + ")"
+                      for name, value
+                      in sorted(self.enum.items(), key=lambda kv: kv[1])]
             values = ",".join(values)
             return "ComboboxParameter('{self.name}', name='{self.nice_name}', values=[{values}])".format(**locals())
         raise Exception("Cannot get parameter source for argument " + self.name)
 
-
     def __repr__(self):
         s = "Argument(" + self.name
-        if self.type: s += ", " + self.type
-        if self.optional is not None: s += ", opt:" + str(self.optional)
-        if self.min is not None: s += ", min:" + str(self.min)
-        if self.max is not None: s += ", max:" + str(self.max)
-        if self.odd is not None: s += ", odd:" + str(self.odd)
-        if self.enum: s += ", enum:" + str(self.enum)
-        if self.multi_enum is not None: s += ", multi:" + str(self.multi_enum)
-        if self.description: s += ", '" + self.description + "'"
+        if self.type:
+            s += ", " + self.type
+        if self.optional is not None:
+            s += ", opt:" + str(self.optional)
+        if self.min is not None:
+            s += ", min:" + str(self.min)
+        if self.max is not None:
+            s += ", max:" + str(self.max)
+        if self.odd is not None:
+            s += ", odd:" + str(self.odd)
+        if self.enum:
+            s += ", enum:" + str(self.enum)
+        if self.multi_enum is not None:
+            s += ", multi:" + str(self.multi_enum)
+        if self.description:
+            s += ", '" + self.description + "'"
         s += ")"
         return s
 
@@ -275,11 +302,21 @@ class {class_name}(NormalElement):
         if param:
             descriptions[param] = desc
 
-        for a in args: self.args[a] = Argument(a, self.name, optional=False, description=descriptions.get(a,""))
-        for a in opt: self.args[a] = Argument(a, self.name, optional=True, description=descriptions.get(a,""))
+        for a in args:
+            self.args[a] = Argument(a,
+                                    self.name,
+                                    optional=False,
+                                    description=descriptions.get(a, ""))
+        for a in opt:
+            self.args[a] = Argument(a,
+                                    self.name,
+                                    optional=True,
+                                    description=descriptions.get(a, ""))
         for a in ret:
             if a != "None":
-                self.ret[a] = Argument(a, self.name, description=descriptions.get(a,""))
+                self.ret[a] = Argument(a,
+                                       self.name,
+                                       description=descriptions.get(a, ""))
 
         for a in self.args.values():
             a.parse_doc()
@@ -288,7 +325,7 @@ class {class_name}(NormalElement):
 
     def source(self):
         element_name = self.name[0].upper() + self.name[1:]
-        element_comment = self.doc.replace("\n.   ","\\n").replace("'''","'")
+        element_comment = self.doc.replace("\n.   ", "\\n").replace("'''", "'")
         class_name = "OpenCVAuto2_" + element_name
         element_name = nice_name(element_name)
 
@@ -337,7 +374,8 @@ class {class_name}(NormalElement):
         code = ""
 
         for arg in inputs:
-            if code: code += "\n" + self.code_indent
+            if code:
+                code += "\n" + self.code_indent
             do_copy = ".copy()" if arg.name in self.ret else ""
             code += "{arg.name} = inputs['{arg.name}'].value{do_copy}".format(**locals())
 
@@ -352,7 +390,8 @@ class {class_name}(NormalElement):
         code += "{ret_names} = cv2.{self.name}({func_args})".format(**locals())
 
         for arg in outputs:
-            if code: code += "\n" + self.code_indent
+            if code:
+                code += "\n" + self.code_indent
             code += "outputs['{arg.name}'] = Data({arg.name})".format(**locals())
 
         return self.class_template.format(**locals())
@@ -379,7 +418,8 @@ from cvlab.diagram.elements.base import *
 """
     for name, obj in sorted(vars(cv2).items()):
         try:
-            if not inspect.isbuiltin(obj) and not inspect.isfunction(obj): continue
+            if not inspect.isbuiltin(obj) and not inspect.isfunction(obj):
+                continue
             print("INFO", name)
             function_source = process(name, obj)
             source += "# cv2." + name + "\n"

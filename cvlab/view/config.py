@@ -1,3 +1,7 @@
+# coding: utf-8
+
+r"""UI configuration"""
+
 import os
 import configparser
 
@@ -11,7 +15,7 @@ PREVIEW_ON_TOP_OPTION = 'preview_on_top'
 STYLE = 'style'
 
 ELEMENTS_SECTION = 'elements'
-EXPERIMENTAL_ELEMENTS ='experimental'
+EXPERIMENTAL_ELEMENTS = 'experimental'
 
 UPDATES_SECTION = "updates"
 UPDATE_DONT_REMIND_VERSION = "dont_remind_version"
@@ -44,7 +48,10 @@ class ConfigWrapper(configparser.SafeConfigParser):
 
     def get(self, section, option, **kwargs):
         try:
-            value = configparser.SafeConfigParser.get(self, section, option, **kwargs)
+            value = configparser.SafeConfigParser.get(self,
+                                                      section,
+                                                      option,
+                                                      **kwargs)
         except (configparser.NoOptionError, configparser.NoSectionError):
             value = None
         return value
@@ -80,7 +87,11 @@ class ConfigWrapper(configparser.SafeConfigParser):
     def get_settings_path(cls):
         # For Windows
         if os.name == 'nt':
-            return os.path.join(os.environ['appdata'], 'CVLab', SETTINGS_FILENAME)
+            return os.path.join(os.environ['appdata'],
+                                'CVLab',
+                                SETTINGS_FILENAME)
         # For Unix
         else:
-            return os.path.expanduser(os.path.join('~', '.cvlab', SETTINGS_FILENAME))
+            return os.path.expanduser(os.path.join('~',
+                                                   '.cvlab',
+                                                   SETTINGS_FILENAME))

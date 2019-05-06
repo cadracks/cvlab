@@ -1,5 +1,11 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+r"""Kinect2"""
+
 import os
-if os.name != 'nt': raise ImportError("Kinect module only work on Windows")
+if os.name != 'nt':
+    raise ImportError("Kinect module only work on Windows")
 
 from datetime import datetime, timedelta
 from threading import Event
@@ -9,6 +15,7 @@ import time
 
 from cvlab.diagram.elements.base import *
 from cvlab.diagram.elements.video_io import Camera
+
 
 class KinectCamera(NormalElement):
     name = "Kinect (OpenNI)"
@@ -20,7 +27,10 @@ class KinectCamera(NormalElement):
         self.capture = None
         self.actual_parameters = {"width": 0, "height": 0, "fps": 0}
         self.last_frame_time = datetime.now()
-        self.play = Event()  # todo: we shall read playing state from some parameter after load
+
+        # todo: we shall read playing state from some parameter after load
+        self.play = Event()
+
         self.play.set()
         self.recalculate()
 
@@ -57,7 +67,8 @@ class KinectCamera(NormalElement):
         self.may_interrupt()
         with self.device_lock:
             self.capture = cv.VideoCapture(cv.cv.CV_CAP_OPENNI)
-            self.capture.set(cv.cv.CV_CAP_OPENNI_IMAGE_GENERATOR_OUTPUT_MODE, cv.cv.CV_CAP_OPENNI_VGA_30HZ)
+            self.capture.set(cv.cv.CV_CAP_OPENNI_IMAGE_GENERATOR_OUTPUT_MODE,
+                             cv.cv.CV_CAP_OPENNI_VGA_30HZ)
 
         if not self.capture or not self.capture.isOpened():
             raise ProcessingError("Can't open the camera device")
@@ -81,25 +92,38 @@ class KinectCamera(NormalElement):
         while True:
             self.may_interrupt()
             now = datetime.now()
+
             if now - self.last_frame_time < timedelta(seconds=1.0/parameters["fps"]):
                 seconds_to_wait = 1.0/parameters["fps"] - (now-self.last_frame_time).total_seconds()
                 breaks = int(round(seconds_to_wait*10+1))
                 for _ in range(breaks):
                     time.sleep(seconds_to_wait/breaks)
                     self.may_interrupt()
+
             self.may_interrupt()
             self.set_state(Element.STATE_BUSY)
             _, image = self.capture.retrieve(0, cv.cv.CV_CAP_OPENNI_BGR_IMAGE)
             _, depth = self.capture.retrieve(0, cv.cv.CV_CAP_OPENNI_DEPTH_MAP)
             self.last_frame_time = datetime.now()
             self.may_interrupt()
+
             if image is not None and len(image) > 0:
-                if parameters["width"] and parameters["height"] and (image.shape[0] != parameters["height"] or image.shape[1] != parameters["width"]):
-                    image = cv.resize(image, (parameters["width"], parameters["height"]))
+                if parameters["width"] \
+                        and parameters["height"] \
+                        and (image.shape[0] != parameters["height"]
+                             or image.shape[1] != parameters["width"]):
+                    image = cv.resize(image,
+                                      (parameters["width"],
+                                       parameters["height"]))
                 self.outputs["image"].put(Data(image))
 
-                if parameters["width"] and parameters["height"] and (depth.shape[0] != parameters["height"] or depth.shape[1] != parameters["width"]):
-                    depth = cv.resize(depth, (parameters["width"], parameters["height"]))
+                if parameters["width"] \
+                        and parameters["height"] \
+                        and (depth.shape[0] != parameters["height"]
+                             or depth.shape[1] != parameters["width"]):
+                    depth = cv.resize(depth,
+                                      (parameters["width"],
+                                       parameters["height"]))
                 self.outputs["depth"].put(Data(depth))
 
                 self.set_state(Element.STATE_READY)
@@ -111,5 +135,3 @@ class KinectCamera(NormalElement):
 
 
 register_elements_auto(__name__, locals(), "Kinect", 10)
-
-

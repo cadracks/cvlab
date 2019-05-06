@@ -1,6 +1,7 @@
-#
-# Creating your own Element for CV Lab
-#
+#!/usr/bin/env python
+# coding: utf-8
+
+r"""Creating your own Element for CV Lab"""
 
 # import whatever libraries you want
 
@@ -18,8 +19,12 @@ class MySampleElement(NormalElement):
 
     def get_attributes(self):
         return [Input("input", name="Input")], \
-               [Output("output-1", name="First output"), Output("output-2", name="Second output")], \
-               [IntParameter("param", "Some integer parameter", min_=1, max_=255)]
+               [Output("output-1", name="First output"),
+                Output("output-2", name="Second output")], \
+               [IntParameter("param",
+                             "Some integer parameter",
+                             min_=1,
+                             max_=255)]
 
     def process_inputs(self, inputs, outputs, parameters):
         # read the parameters and inputs
@@ -37,4 +42,3 @@ class MySampleElement(NormalElement):
 
 # register all elements defined above in the palette
 register_elements_auto(__name__, locals(), "My private elements", 1)
-

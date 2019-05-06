@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+r"""Diagram"""
+
 from _thread import get_ident
 
 import itertools
@@ -55,7 +60,9 @@ class DiagramLock(QReadWriteLock):
 class Diagram(QObject):
     """The processing diagram"""
 
-    # todo: if the singals and QObject dependency are removed, Workarea or ScrolledWorkarea could derive from
+    # todo: if the signals and QObject dependency are removed,
+    #       Workarea or ScrolledWorkarea could derive from
+
     # Diagram, which would possibly make thing simpler
     element_added = pyqtSignal(Element, tuple)
     element_deleted = pyqtSignal(Element)
@@ -78,13 +85,15 @@ class Diagram(QObject):
 
     def add_element(self, e, position):
         if not self.painter:
-            raise GeneralException("Elements cannot be added to Diagram until the painter is set")
+            raise GeneralException("Elements cannot be added to Diagram "
+                                   "until the painter is set")
         e.diagram = self
         self.elements.add(e)
         self.element_added.emit(e, position)
 
     def delete_element(self, e):
-        # todo: if we remove element, to which other elements try to access, we gonna have trouble
+        # todo: if we remove element, to which other elements
+        #       try to access, we gonna have trouble
         with self.diagram_lock.writer:
             to_connect = []
             if len(e.inputs) == 1 and len(e.outputs) == 1:
@@ -94,17 +103,22 @@ class Diagram(QObject):
                 post = output.connected_to
                 if len(pre) > 0 and len(post) > 0:
                     for i, o in itertools.product(pre, post):
-                        # todo: it's not optimal when 'i' is multiple but 'o' is not
-                        #self.connect_io(i, o)
+                        # todo: it's not optimal when 'i' is multiple
+                        #       but 'o' is not
+                        # self.connect_io(i, o)
                         to_connect.append((i, o))
+
         for p in list(e.parameters.values()):
             p.disconnect_all_children()
+
         for io in list(e.outputs.values()) + list(e.inputs.values()):
             io.disconnect_all()
             self.delete_connections_with_connector(io)
+
         e.delete()
         self.elements.remove(e)
         self.element_deleted.emit(e)
+
         for i, o in to_connect:
             self.connect_io(i, o)
 
@@ -122,8 +136,13 @@ class Diagram(QObject):
                 input_ = o2
                 output = o1
             if Diagram.makes_loop(output, input_):
-                print("WARNING Connection loop: {}:{} -> {}:{}".format(output.parent.name, output.name, input_.parent.name, input_.name))
-                # raise ConnectError("This connection would create an infinite loop!")
+                print("WARNING Connection loop: "
+                      "{}:{} -> {}:{}".format(output.parent.name,
+                                              output.name,
+                                              input_.parent.name,
+                                              input_.name))
+                # raise ConnectError("This connection would
+                #                     create an infinite loop!")
                 return
             input_.connect(output)
             output.connect(input_)
@@ -141,10 +160,13 @@ class Diagram(QObject):
             else:
                 input_ = o2
                 output = o1
+
             output.disconnect(input_)
             input_.disconnect(output)
+
             if output.desequencing:
                 output.hook.actualize_outputs()
+
         self.connections.remove((output, input_))
 
     def notify_disconnect(self, output, input_):
@@ -158,11 +180,15 @@ class Diagram(QObject):
             c = set()
             while q:
                 act = q.pop()
+
                 if act in c:
                     continue
+
                 if act is output.parent:
                     return True
+
                 c.add(act)
+
                 for i in list(act.outputs.values()):
                     for o in i.connected_to:
                         if o.parent is output.parent:
@@ -179,7 +205,8 @@ class Diagram(QObject):
 
     def load_from_json(self, ascii_data):
         if not self.painter:
-            raise GeneralException("Diagram cannot be filled with data until the painter is set")
+            raise GeneralException("Diagram cannot be filled with data "
+                                   "until the painter is set")
         ComplexJsonDecoder(self).decode(ascii_data)
         QTimer.singleShot(100, self.update_previews)
 
@@ -228,20 +255,29 @@ class Diagram(QObject):
 
         filetype = "CV-Lab diagram save file. See: https://github.com/cvlab-ai/cvlab "
 
-        return {"_type": "diagram", "elements": elements, "wires": wires, "params": connected_params,
-                "zoom_level": self.zoom_level, "_version": __version__, "_filetype": filetype}
+        return {"_type": "diagram",
+                "elements": elements,
+                "wires": wires,
+                "params": connected_params,
+                "zoom_level": self.zoom_level,
+                "_version": __version__,
+                "_filetype": filetype}
 
     def from_json(self, data):
-        #TODO: catch json parsing errors and present proper message
+        # TODO: catch json parsing errors and present proper message
         elements = {}
-        sorted_orders = sorted(map(int, data["elements"]))  # sorting is important for preserving z-index
+
+        # sorting is important for preserving z-index
+        sorted_orders = sorted(map(int, data["elements"]))
 
         for e_order in sorted_orders:
             e = data["elements"][str(e_order)]
             self.add_element(e, (e.pos().x(), e.pos().y()))
             elements[e_order] = e
 
-        sorted_orders = sorted(map(int, data["wires"]))     # sorting is important for preserving connections order
+        # sorting is important for preserving connections order
+        sorted_orders = sorted(map(int, data["wires"]))
+
         for c_order in sorted_orders:
             connection = data["wires"][str(c_order)]
             from_e_id = connection["from_element"]

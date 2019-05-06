@@ -1,3 +1,7 @@
+# coding: utf-8
+
+r"""UI Toolbox"""
+
 from PyQt5 import QtGui, QtCore
 
 from ..diagram.elements import get_sorted_elements
@@ -51,7 +55,9 @@ class ElementsList(QTreeView):
 
     def prepare_elements_model(self):
         model = QStandardItemModel()
-        nodes = [(elements, QStandardItem(package)) for package, elements in get_sorted_elements()]
+        nodes = [(elements, QStandardItem(package))
+                 for package, elements
+                 in get_sorted_elements()]
         element_types = [node[0] for node in nodes]
         elements_types_list = flatten_list(element_types)
         self.class_mapper = ClassStringMapper(elements_types_list)
@@ -73,8 +79,10 @@ class ElementsList(QTreeView):
     @pyqtSlot(str)
     def filter_changed(self, text):
         self.filter_proxy.setFilterFixedString(text)
-        if text: self.expandAll()
-        else: self.collapseAll()
+        if text:
+            self.expandAll()
+        else:
+            self.collapseAll()
 
     def is_draggable_item_selected(self):
         return len(self.selectedIndexes()) > 2
@@ -104,7 +112,8 @@ class ElementsList(QTreeView):
                     # todo: move this functionality to elements self logic
                     self.last_spawned_element.recalculate(True, True, True)
         elif event.button() == QtCore.Qt.LeftButton:
-            self.setExpanded(self.currentIndex(), not self.isExpanded(self.currentIndex()))
+            self.setExpanded(self.currentIndex(),
+                             not self.isExpanded(self.currentIndex()))
 
         self.clearSelection()
 
@@ -112,16 +121,23 @@ class ElementsList(QTreeView):
 class FilterProxy(QtCore.QSortFilterProxyModel):
     def filterAcceptsRow(self, source_row, source_parent):
         if not self.filterRegExp().isEmpty():
-            source_index = self.sourceModel().index(source_row, self.filterKeyColumn(), source_parent)
+            source_index = self.sourceModel().index(source_row,
+                                                    self.filterKeyColumn(),
+                                                    source_parent)
             if source_index.isValid():
                 child_rows_count = self.sourceModel().rowCount(source_index)
+
                 for i in range(child_rows_count):
                     if self.filterAcceptsRow(i, source_index):
                         return True
                 key = self.sourceModel().data(source_index, self.filterRole())
-                if hasattr(key, "toString"): key = str(key.toString())
+
+                if hasattr(key, "toString"):
+                    key = str(key.toString())
+
                 return self.filterRegExp().indexIn(key) >= 0
-        return super(FilterProxy, self).filterAcceptsRow(source_row, source_parent)
+        return super(FilterProxy, self).filterAcceptsRow(source_row,
+                                                         source_parent)
 
 
 class ClassStringMapper:

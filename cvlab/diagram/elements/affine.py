@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+r"""Affine transformation (rotation) element"""
+
 from .base import *
 
 
@@ -8,9 +13,7 @@ class Rotate(NormalElement):
     def get_attributes(self):
         return [Input("input")], \
                [Output("output")], \
-               [
-                    IntParameter("angle", "Angle", 0, min_=0, max_=270, step=90),
-               ]
+               [IntParameter("angle", "Angle", 0, min_=0, max_=270, step=90), ]
 
     def process_inputs(self, inputs, outputs, parameters):
         image = np.copy(inputs["input"].value)
@@ -22,8 +25,10 @@ class Rotate(NormalElement):
                            [0, 1, -h / 2],
                            [0, 0, 1]],
                           dtype=np.float32)
+
         if angle % 180 == 90:
             h, w = w, h
+
         trans2 = np.array([[1, 0, w / 2],
                            [0, 1, h / 2],
                            [0, 0, 1]],
@@ -31,7 +36,7 @@ class Rotate(NormalElement):
         rot = np.array([[np.cos(angle_rad), -np.sin(angle_rad), 0],
                         [np.sin(angle_rad), np.cos(angle_rad), 0],
                         [0, 0, 1]],
-                          dtype=np.float32)
+                       dtype=np.float32)
 
         mat = np.dot(np.dot(trans2, rot), trans1)
 

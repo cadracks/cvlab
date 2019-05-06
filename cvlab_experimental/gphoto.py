@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+r"""gphoto"""
+
 from cvlab.diagram.elements.base import *
 
 
@@ -26,5 +31,5 @@ class DSLR(ProcessElement):
     def capture(self):
         self.recalculate(True, True, True)
 
-register_elements_auto(__name__, locals(), "Camera", 10)
 
+register_elements_auto(__name__, locals(), "Camera", 10)

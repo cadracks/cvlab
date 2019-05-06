@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+r"""Edge detection elements"""
+
 from .base import *
 
 

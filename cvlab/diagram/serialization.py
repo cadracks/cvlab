@@ -1,12 +1,18 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+r"""Serialization"""
+
 import json
 
 
 class ComplexJsonEncoder(json.JSONEncoder):
     def default(self, o):
         if hasattr(o, 'to_json'):
-                return o.to_json()
+            return o.to_json()
         else:
-            raise TypeError('Object of type %s with value of %s is not JSON serializable' % (type(o), repr(o)))
+            raise TypeError('Object of type %s with value of %s is '
+                            'not JSON serializable' % (type(o), repr(o)))
 
 
 class ComplexJsonDecoder(json.JSONDecoder):
@@ -22,7 +28,9 @@ class ComplexJsonDecoder(json.JSONDecoder):
             element = get_element(module_name + "." + class_name)()
             element.from_json(d)
             return element
+
         if "_type" in d and d["_type"] == "diagram":
             self.diagram_instance.from_json(d)
             return self.diagram_instance
+
         return d

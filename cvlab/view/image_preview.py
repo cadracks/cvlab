@@ -1,3 +1,7 @@
+# coding: utf-8
+
+r"""UI image preview"""
+
 import json
 import os
 from datetime import datetime, timedelta
@@ -445,9 +449,9 @@ def array_to_pixmap(arr):
     arr = np.array(arr)
 
     if arr.dtype in (np.float, np.float16, np.float32, np.float64):
-        arr = arr * 255
+        arr *= 255
     elif arr.dtype in (np.int16, np.uint16):
-        arr = arr // 256
+        arr //= 256
 
     arr = arr.clip(0, 255).astype(np.uint8)
 
@@ -473,8 +477,10 @@ class PreviewScrollArea(QScrollArea):
         assert isinstance(event, QMouseEvent)
         if self.lastMouse and self.lastMouse != event.pos():
             delta = event.pos() - self.lastMouse
-            self.horizontalScrollBar().setValue(self.horizontalScrollBar().value() - delta.x())
-            self.verticalScrollBar().setValue(self.verticalScrollBar().value() - delta.y())
+            self.horizontalScrollBar().setValue(
+                self.horizontalScrollBar().value() - delta.x())
+            self.verticalScrollBar().setValue(
+                self.verticalScrollBar().value() - delta.y())
         self.lastMouse = event.pos()
         event.accept()
 
@@ -492,7 +498,14 @@ class PreviewWindow(QFrame):
     key_signal = pyqtSignal(int, int, int)
     move_signal = pyqtSignal()
 
-    def __init__(self, manager, name, image=None, message=None, position=None, size=None, high_quality=False):
+    def __init__(self,
+                 manager,
+                 name,
+                 image=None,
+                 message=None,
+                 position=None,
+                 size=None,
+                 high_quality=False):
         super(PreviewWindow, self).__init__()
         self.setObjectName("Preview window {}".format(name))
         self.setWindowTitle(name)
@@ -503,7 +516,8 @@ class PreviewWindow(QFrame):
         if self.maxsize:
             self.maxsize = QSize(*self.maxsize)
         else:
-            self.maxsize = desktop.screenGeometry(desktop.screenNumber(self)).size() * 0.95
+            self.maxsize = \
+                desktop.screenGeometry(desktop.screenNumber(self)).size() * 0.95
 
         self.setMinimumSize(*self.minsize)
         self.setMaximumSize(self.maxsize)
@@ -532,7 +546,8 @@ class PreviewWindow(QFrame):
 
         self.message_label = QLabel(" ")
         self.layout().addWidget(self.message_label, 0, 0, Qt.AlignTop)
-        self.message_label.setStyleSheet("QLabel {color:black;background:rgba(255,255,255,32)}")
+        self.message_label.setStyleSheet(
+            "QLabel {color:black;background:rgba(255,255,255,32)}")
         self.message_label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.message_label.setText("")
         shadow = QGraphicsDropShadowEffect()
@@ -558,7 +573,8 @@ class PreviewWindow(QFrame):
             self.resize(*size)
 
         if position == 'cursor':
-            position = (QCursor.pos().x() - self.size().width()//2, QCursor.pos().y() - self.size().height()//2)
+            position = (QCursor.pos().x() - self.size().width()//2,
+                        QCursor.pos().y() - self.size().height()//2)
 
         if position:
             self.move(*position)
@@ -566,26 +582,35 @@ class PreviewWindow(QFrame):
         self.showNormal()
 
     def setImage(self, image, show=True, scale=None, blink=False):
-        if image is None: return
+        if image is None:
+            return
+
         self.original = image
+
         if isinstance(image, QImage):
             image = QPixmap.fromImage(image)
         elif isinstance(image, QPixmap):
             pass
         else:
             image = array_to_pixmap(image)
+
         self.image = image
+
         if not scale:
             scale = self.scale
             if image.width()*scale > self.maxsize.width():
                 scale = self.maxsize.width() / image.width()
             if image.height()*scale > self.maxsize.height():
                 scale = self.maxsize.height() / image.height()
+
         self.setZoom(scale)
+
         if self.message is not None:
             self.message_label.setText(self.message)
+
         if blink:
             self.blink(True)
+
         if show:
             self.show()
             if self.raise_window:
@@ -595,14 +620,24 @@ class PreviewWindow(QFrame):
         self.scale = 1.0
         self.fixed_size = None
 
-    def setImageAndParams(self, image, show=True, scale=None, position=None, size=None, hq=None, message=None, blink=False):
+    def setImageAndParams(self,
+                          image,
+                          show=True,
+                          scale=None,
+                          position=None,
+                          size=None,
+                          hq=None,
+                          message=None,
+                          blink=False):
         if size:
             self.fixed_size = size
         if position:
             self.move(*position)
         if hq is not None:
-            if hq: self.quality = Qt.SmoothTransformation
-            else: self.quality = Qt.FastTransformation
+            if hq:
+                self.quality = Qt.SmoothTransformation
+            else:
+                self.quality = Qt.FastTransformation
         if message is not None:
             self.message = message
         self.setImage(image, show=show, scale=scale, blink=blink)
@@ -616,8 +651,10 @@ class PreviewWindow(QFrame):
     def setParams(self, scale=None, rotation=None):
         assert isinstance(self.image, QPixmap)
 
-        if scale is None: scale = self.scale
-        if rotation is None: rotation = self.rotation
+        if scale is None:
+            scale = self.scale
+        if rotation is None:
+            rotation = self.rotation
 
         if scale != 1.0 or rotation:
             transform = QTransform().rotate(rotation).scale(scale,scale)
@@ -650,6 +687,7 @@ class PreviewWindow(QFrame):
             s = 1.1
         else:
             s = 1 / 1.1
+
         self.setZoom(s * self.scale)
 
         scrollX = self.scrollarea.horizontalScrollBar().value()
@@ -728,16 +766,24 @@ class PreviewWindow(QFrame):
             rotation = (self.rotation + 270) % 360
             self.setRotation(rotation)
         elif action == save:
-            filename, filter = QFileDialog.getSaveFileNameAndFilter(self, "Save image...", filter="*.png;;*.jpg;;*.bmp;;*.tiff;;*.gif", directory=self.last_save_dir)
+            filename, filter = QFileDialog.getSaveFileNameAndFilter(
+                self,
+                "Save image...",
+                filter="*.png;;*.jpg;;*.bmp;;*.tiff;;*.gif",
+                directory=self.last_save_dir)
             if filename:
                 try:
                     if not str(filename).endswith(filter[1:]):
                         filename = filename + filter[1:]
                     PreviewWindow.last_save_dir = path.dirname(str(filename))
                     success = self.image.save(filename, quality=100)
-                    if not success: raise Exception("unknown error")
+                    if not success:
+                        raise Exception("unknown error")
                 except Exception as e:
-                    QMessageBox.critical(self, "Saving error", "Cannot save.\nError: {}".format(e.message))
+                    QMessageBox.critical(
+                        self,
+                        "Saving error",
+                        "Cannot save.\nError: {}".format(e.message))
                     print("Saving error:", e)
         elif action == fixed:
             if self.fixed_size:
@@ -802,8 +848,12 @@ class WindowManager(QObject):
             if winname not in self.windows:
                 position = kwargs.pop('position', 'auto')
                 if position == 'auto':
-                    position = self.positions.get(winname, self.find_best_place())
-                window = self.windows[winname] = PreviewWindow(self, winname, position=position, **kwargs)
+                    position = self.positions.get(winname,
+                                                  self.find_best_place())
+                window = self.windows[winname] = PreviewWindow(self,
+                                                               winname,
+                                                               position=position,
+                                                               **kwargs)
                 window.key_signal.connect(self.key_slot)
                 window.move_signal.connect(self.save_positions)
             return self.windows[winname]
@@ -811,11 +861,15 @@ class WindowManager(QObject):
     def waitKey(self, delay=0):
         while True:
             key, position = self.waitKeyMouse(delay)
-            if key != KEY_MOUSE: return key
+            if key != KEY_MOUSE:
+                return key
 
     def waitKeyMouse(self, delay=0):
-        if delay <= 0: timeout = None
-        else: timeout = delay * 0.001
+        if delay <= 0:
+            timeout = None
+        else:
+            timeout = delay * 0.001
+
         with self.key_lock:
             self.key = KEY_NONE
             self.key_lock.wait(timeout)
@@ -826,12 +880,16 @@ class WindowManager(QObject):
     def key_slot(self, key, x, y):
         with self.key_lock:
             self.key = key
-            self.key_position = (x,y)
+            self.key_position = (x, y)
             self.key_lock.notify()
 
     def find_best_place(self):
-        positions_x = [w.frameGeometry().x()+w.width() for w in self.windows.values() if w.isVisible()]
-        if not positions_x: return None
+        positions_x = [w.frameGeometry().x()+w.width()
+                       for w
+                       in self.windows.values()
+                       if w.isVisible()]
+        if not positions_x:
+            return None
         x = max(positions_x) + 4
         y = 50
         return x, y
@@ -854,15 +912,20 @@ class WindowManager(QObject):
 
     @pyqtSlot()
     def save_positions(self, force=False):
-        if not force and datetime.now() - self.positions_last_save < timedelta(seconds=5):
+        if not force \
+                and datetime.now() - self.positions_last_save < timedelta(seconds=5):
             return
+
         path = os.path.expanduser(self.positions_file)
+
         with self.lock:
             for name, window in self.windows.items():
                 assert isinstance(window, PreviewWindow)
                 self.positions[name] = window.x(), window.y()
+
         with open(path, 'w') as f:
             json.dump(self.positions, f)
+
         self.positions_last_save = datetime.now()
 
     def __del__(self):
@@ -949,7 +1012,7 @@ moveWindow = manager.moveWindow
 waitKeyMouse = manager.waitKeyMouse
 
 
-def namedWindow(*a,**kw):
+def namedWindow(*a, **kw):
     pass
 
 

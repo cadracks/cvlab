@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+r"""Data flow elements"""
+
 from .base import *
 
 
@@ -9,9 +14,7 @@ class Forwarder(NormalElement):
         super(Forwarder, self).__init__()
 
     def get_attributes(self):
-        return [Input("input")], \
-               [Output("output")], \
-               []
+        return [Input("input")], [Output("output")], []
 
     def get_processing_units(self, inputs, parameters):
         outputs = {"output": inputs["input"]}
@@ -30,7 +33,6 @@ def {name}(inputs, outputs, parameters):
         return name, src, []
 
 
-
 class Sequencer(NormalElement):
     name = "Sequencer"
     comment = "Makes a single sequenced data from its inputs"
@@ -41,7 +43,7 @@ class Sequencer(NormalElement):
     def get_attributes(self):
         return [Input("inputs", multiple=True)], \
                [Output("output", "Sequence")], \
-            []
+               []
 
     def get_processing_units(self, inputs, parameters):
         outputs = {"output": Sequence(inputs["inputs"].value)}
@@ -66,9 +68,6 @@ class Desequencer(NormalElement):
 
     def process_units(self):
         pass
-
-
-
 
 
 class Zip(NormalElement):
@@ -96,7 +95,6 @@ class Zip(NormalElement):
         pass
 
 
-
 class SequenceSelector(NormalElement):
     name = "Sequence selector"
     comment = "Selects a simple image from a sequence"
@@ -108,11 +106,15 @@ class SequenceSelector(NormalElement):
 
     def get_processing_units(self, inputs, parameters):
         sequence = inputs["input"]
+
         if sequence.type() != Data.SEQUENCE or not sequence.value:
             raise TypeError("Input data must be a non-empty sequence")
+
         data = sequence.value[0]
+
         if not all(d.is_compatible(data) for d in sequence.value):
             raise TypeError("All data values in sequence must be compatible")
+
         outputs = {"output": data.create_placeholder()}
         units = [ProcessingUnit(self, inputs, parameters, outputs)]
         return units, outputs
@@ -132,10 +134,15 @@ class SequenceDeleter(NormalElement):
 
     def get_processing_units(self, inputs, parameters):
         sequence = inputs["input"]
-        if sequence.type() != Data.SEQUENCE or not sequence.value or len(sequence.value) <= 1:
+
+        if sequence.type() != Data.SEQUENCE \
+                or not sequence.value \
+                or len(sequence.value) <= 1:
             raise TypeError("Input data must be a non-empty sequence")
+
         if not all(d.is_compatible(sequence.value[0]) for d in sequence.value):
             raise TypeError("All data values in sequence must be compatible")
+
         data = Sequence(sequence.value[:-1])
         outputs = {"output": data.create_placeholder()}
         units = [ProcessingUnit(self, inputs, parameters, outputs)]
@@ -146,7 +153,6 @@ class SequenceDeleter(NormalElement):
         new_seq = inputs["input"].value[:]
         del new_seq[deleted]
         outputs["output"] = Sequence(new_seq)
-
 
 
 class ConcatenateOperator(MultiInputOneOutputElement):

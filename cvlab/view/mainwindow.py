@@ -1,3 +1,7 @@
+# coding: utf-8
+
+r"""UI main window"""
+
 import os
 
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer
@@ -41,7 +45,8 @@ class MainWindow(QMainWindow):
 
         self.toolbox = Toolbox()
         self.tabs_container = TabsContainer()
-        self.diagram_manager = DiagramManager(self.tabs_container, self.style_manager)
+        self.diagram_manager = DiagramManager(self.tabs_container,
+                                              self.style_manager)
         self.tabs_container.diagram_manager = self.diagram_manager
         MenuBar(self)
 
@@ -86,11 +91,15 @@ class MainWindow(QMainWindow):
 
     def keyPressEvent(self, event):
         key = event.key()
+
         if key == Qt.Key_Escape:
             self.toolbox.filter_input.setFocus()
             self.toolbox.filter_input.selectAll()
-        if (key == Qt.Key_Tab and (event.modifiers() & Qt.ControlModifier)) or \
-                (key == Qt.Key_Backtab and (event.modifiers() & Qt.ControlModifier)):
+
+        if (key == Qt.Key_Tab
+            and (event.modifiers() & Qt.ControlModifier))\
+                or (key == Qt.Key_Backtab
+                    and (event.modifiers() & Qt.ControlModifier)):
             self.tabs_container.keyPressEvent(event)
 
     def closeEvent(self, event):
@@ -98,7 +107,10 @@ class MainWindow(QMainWindow):
         self.diagram_manager.save_to_settings(self.settings)
         self.diagram_manager.close_all_diagrams()
         # Close any remaining windows:
-        for window in [x for x in QApplication.topLevelWidgets() if x.isWindow() and x != self and x.parent() is None and x.isVisible()]:
+        for window in [x
+                       for x
+                       in QApplication.topLevelWidgets()
+                       if x.isWindow() and x != self and x.parent() is None and x.isVisible()]:
             window.close()
 
     def show_update_info(self, can_update, newest_version):
@@ -107,7 +119,9 @@ class MainWindow(QMainWindow):
         if can_update:
             act_version = parse_version(__version__)
             newest_version = parse_version(newest_version)
-            dont_remind_version = parse_version(self.settings.get_with_default(UPDATES_SECTION, UPDATE_DONT_REMIND_VERSION))
+            dont_remind_version = parse_version(
+                self.settings.get_with_default(UPDATES_SECTION,
+                                               UPDATE_DONT_REMIND_VERSION))
 
             command = self.updater.update_command()
             self.application.clipboard().setText(command)
@@ -128,13 +142,17 @@ To update you may run:
                 print("--- UPDATE INFORMATION ---")
                 print(message)
             else:
-                mb = QMessageBox(QMessageBox.Information,"Update information", message)
-                mb.addButton(QPushButton("OK"), QMessageBox.AcceptRole)
+                mb = QMessageBox(QMessageBox.Information,
+                                 "Update information",
+                                 message)
+                mb.addButton(QPushButton("OK"),
+                             QMessageBox.AcceptRole)
                 ignore = QPushButton("Ignore this update")
                 mb.addButton(ignore, QMessageBox.DestructiveRole)
                 mb.exec_()
                 if mb.clickedButton() == ignore:
-                    self.settings.set(UPDATES_SECTION, UPDATE_DONT_REMIND_VERSION, str(newest_version))
+                    self.settings.set(UPDATES_SECTION,
+                                      UPDATE_DONT_REMIND_VERSION,
+                                      str(newest_version))
         else:
             print("You're using newest version of CV Lab ({__version__}).".format(**locals()))
-

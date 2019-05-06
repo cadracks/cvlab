@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+r"""Segmentation elements"""
+
 from .base import *
 
 
@@ -8,8 +13,20 @@ class GrabCut(NormalElement):
     def get_attributes(self):
         return [Input("image"), Input("classes")], \
                [Output("classes")], \
-               [ComboboxParameter('convert_input', [('None', ''), ('4-value', '4'), ('255-value', '255')], "Convert input", 1),
-                ComboboxParameter('convert_output', [('None', ''), ('2-value', '2'), ('4-value', '4'), ('255 2-value', '255-2'), ('255 4-value', '255-4')], "Convert output", 1),
+               [ComboboxParameter('convert_input',
+                                  [('None', ''),
+                                   ('4-value', '4'),
+                                   ('255-value', '255')],
+                                  "Convert input",
+                                  1),
+                ComboboxParameter('convert_output',
+                                  [('None', ''),
+                                   ('2-value', '2'),
+                                   ('4-value', '4'),
+                                   ('255 2-value', '255-2'),
+                                   ('255 4-value', '255-4')],
+                                  "Convert output",
+                                  1),
                 IntParameter('iterations', "Iterations", 1, 1, 100)]
 
     def process_inputs(self, inputs, outputs, parameters):
@@ -29,7 +46,13 @@ class GrabCut(NormalElement):
         bgdmodel = np.zeros((1, 65), np.float64)
         fgdmodel = np.zeros((1, 65), np.float64)
 
-        cv.grabCut(image, classes, None, bgdmodel, fgdmodel, parameters['iterations'], cv.GC_INIT_WITH_MASK)
+        cv.grabCut(image,
+                   classes,
+                   None,
+                   bgdmodel,
+                   fgdmodel,
+                   parameters['iterations'],
+                   cv.GC_INIT_WITH_MASK)
 
         if parameters['convert_output'] == '2':
             tmp = np.zeros_like(classes)
@@ -61,5 +84,6 @@ class GrabCut(NormalElement):
             classes = tmp
 
         outputs["classes"] = Data(classes)
+
 
 register_elements_auto(__name__, locals(), "Segmentation", 6)

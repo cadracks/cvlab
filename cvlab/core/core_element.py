@@ -1,3 +1,7 @@
+# coding: utf-8
+
+r"""Diagram core element"""
+
 import inspect
 import re
 
@@ -9,7 +13,11 @@ TEST_QT = False
 
 
 class CoreElement(Element):
-    """Base class for all diagram elements"""
+    """Base class for all diagram elements
+
+    The Element class is defined in diagram/elements/element.py
+
+    """
 
     def __init__(self):
         super(CoreElement, self).__init__()
@@ -27,7 +35,11 @@ class CoreElement(Element):
         self.is_recalculating = False
         self.prepare_empty_data()
 
-    def recalculate(self, refresh_parameters, refresh_structure, force_break, force_units_recalc=False):
+    def recalculate(self,
+                    refresh_parameters,
+                    refresh_structure,
+                    force_break,
+                    force_units_recalc=False):
         while True:
             try:
                 self.parameters_changed |= refresh_parameters
@@ -45,10 +57,14 @@ class CoreElement(Element):
             except (InterruptException, ProcessingBreak):
                 pass
             except Exception as e:
-                self.set_state(self.STATE_ERROR, e)  # todo: core2: uncomment this!!!
+                # todo: core2: uncomment this!!!
+                self.set_state(self.STATE_ERROR, e)
+
             self.actual_processing_unit = None
+
             if not self.delayed_recalculate:
                 break
+
         self.is_recalculating = False
 
     def may_interrupt(self):
@@ -63,10 +79,14 @@ class CoreElement(Element):
         """Does processing of inputs and returns the outputs"""
 
         ins = defaultdict(dict)  # [channel number][name] -> input channel image
+
         for iname, idata in inputs.items():
             for chnum, ich in enumerate(cv.split(idata.value)):
                 ins[chnum][iname] = Data(ich)
-        outs = defaultdict(dict)  # [output name][channel number] -> output channel image
+
+        # [output name][channel number] -> output channel image
+        outs = defaultdict(dict)
+
         for chnum, ich in ins.items():
             o = {}
             self.may_interrupt()
@@ -74,15 +94,19 @@ class CoreElement(Element):
             self.may_interrupt()
             for outname, outch in o.items():
                 outs[outname][chnum] = outch
+
         for outname, channels in outs.items():
             if not all(channels.values()):
                 outputs[outname] = Data()
             else:
-                outputs[outname] = Data(cv.merge([i.value for i in channels.values()]))
+                outputs[outname] = \
+                    Data(cv.merge([i.value for i in channels.values()]))
 
     def get_processing_units(self, inputs, parameters):
         """Returns processing units and output placeholders for the element"""
-        return self.get_default_processing_units(inputs, parameters, self.outputs.keys())
+        return self.get_default_processing_units(inputs,
+                                                 parameters,
+                                                 self.outputs.keys())
 
     def get_default_processing_units(self, inputs, parameters, output_ids):
         sequences = 0
@@ -101,8 +125,13 @@ class CoreElement(Element):
         outputs = {name: Sequence() for name in output_ids}
 
         for seq_number in range(0, sequences):
-            seq_inputs = {input_name: input_.sequence_get_value(seq_number) for input_name, input_ in inputs.items()}
-            seq_units, seq_outputs = self.get_default_processing_units(seq_inputs, parameters, output_ids)
+            seq_inputs = {input_name: input_.sequence_get_value(seq_number)
+                          for input_name, input_
+                          in inputs.items()}
+            seq_units, seq_outputs = \
+                self.get_default_processing_units(seq_inputs,
+                                                  parameters,
+                                                  output_ids)
             units += seq_units
             for output_name, output_data in seq_outputs.items():
                 outputs[output_name].value.append(output_data)
@@ -115,27 +144,37 @@ class CoreElement(Element):
 
     def prepare_parameters(self):
         self.parameters_changed = False
+
         for name, parameter in self.parameters.items():
             self.data.parameters[name] = parameter.get()
+
         self.clear_outputs()
+
         for unit in self.units:
             unit.calculated = False
 
     def prepare_empty_data(self):
         self.data = DataSet()
+
         for unit in self.units:
             unit.disconnect_observables()
+
         self.units = []
 
     def prepare_structure(self):
         self.structure_changed = False
         self.prepare_empty_data()
         self.prepare_parameters()
+
         for name, input_ in self.inputs.items():
             self.data.inputs[name] = input_.get()
-        self.units, self.data.outputs = self.get_processing_units(self.data.inputs, self.data.parameters)
+
+        self.units, self.data.outputs = \
+            self.get_processing_units(self.data.inputs, self.data.parameters)
+
         for name, data in self.data.outputs.items():
             self.outputs[name].put(data)
+
         for unit in self.units:
             unit.connect_observables()
 
@@ -160,9 +199,12 @@ class CoreElement(Element):
             self.process_inputs(inputs, outputs, unit.parameters)
             self.may_interrupt()
 
-            # TODO: This is a workaround. Elements should never remove objects from 'outputs'
+            # TODO: This is a workaround.
+            #  Elements should never remove objects from 'outputs'
+
             # We should really modify Elements to no stop doing that
-            # Also, this is probably wrong if there is more than one ProcessingUnit!
+            # Also, this is probably wrong if there is
+            # more than one ProcessingUnit!
             for output_name in outputs:
                 unit.outputs[output_name].assign(outputs[output_name])
 
@@ -176,26 +218,34 @@ class CoreElement(Element):
         self.may_interrupt()
 
     def delete(self):
+        r"""Delete the element"""
         self.prepare_empty_data()  # disconnects data connections
+
         for o in self.outputs.values():
             o.disconnect_all()
+
         for i in self.inputs.values():
             i.disconnect_all()
             i.hook.delete()
 
     def get_source(self):
-        """Returns FUNCTION_NAME and SOURCE of the element in format (without leading whitespace!)
+        """Returns FUNCTION_NAME and SOURCE of the element in format
+        (without leading whitespace!)
             def FUNCTION_NAME(inputs, outputs, parameters):
                 # do processing: inputs, parameters -> outputs
         """
         name = self.__class__.__name__.lower()
+
         if self.process_inputs != CoreElement.process_inputs:
-            src = inspect.getsource(self.process_inputs).replace("def process_inputs(self,", "def " + name + "(")
+            src = inspect.getsource(self.process_inputs).replace(
+                "def process_inputs(self,", "def " + name + "(")
         else:
-            src = inspect.getsource(self.process_channels).replace("def process_channels(self,", "def " + name + "(")
+            src = inspect.getsource(self.process_channels).replace(
+                "def process_channels(self,", "def " + name + "(")
+
         src = src.replace("self.may_interrupt()", "")
         margin = re.search(r"^(\s+)def ", src)
-        if margin: src = re.sub("^" + margin.group(1), "", src, flags=re.MULTILINE)
+        if margin:
+            src = re.sub("^" + margin.group(1), "", src, flags=re.MULTILINE)
         src = src.replace("\t", "    ")
         return name, src, []
-

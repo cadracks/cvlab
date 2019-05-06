@@ -1,3 +1,7 @@
+# coding: utf-8
+
+r"""UI Wires"""
+
 import os
 import sys
 
@@ -37,7 +41,9 @@ class WiresBase(QWidget):
 
 class WiresForeground(WiresBase):
     def __init__(self, workarea, user_actions, wire_tools):
-        super(WiresForeground, self).__init__(workarea, user_actions, wire_tools)
+        super(WiresForeground, self).__init__(workarea,
+                                              user_actions,
+                                              wire_tools)
         self.cursor_wire = None
         self.cursor_line = None
         self.is_cursor_line_active = False
@@ -49,8 +55,12 @@ class WiresForeground(WiresBase):
         if self.cursor_wire is not None:
             foreground_pen = self.wire_tools.pen_selected
             painter.strokePath(self.cursor_wire.line, foreground_pen.line)
-            self.wire_tools.draw_start_symbol(painter, self.cursor_wire.start_point, foreground_pen)
-            self.wire_tools.draw_end_symbol(painter, self.cursor_wire.end_point, foreground_pen)
+            self.wire_tools.draw_start_symbol(painter,
+                                              self.cursor_wire.start_point,
+                                              foreground_pen)
+            self.wire_tools.draw_end_symbol(painter,
+                                            self.cursor_wire.end_point,
+                                            foreground_pen)
 
     @pyqtSlot()
     def on_cursor_line_started(self):
@@ -74,13 +84,17 @@ class WiresForeground(WiresBase):
         if self.cursor_wire is not None:
             self.cursor_wire = None
         if self.cursor_line is not None:
-            self.cursor_wire = Wire(self.cursor_line[0], self.cursor_line[1], workarea=self.workarea)
+            self.cursor_wire = Wire(self.cursor_line[0],
+                                    self.cursor_line[1],
+                                    workarea=self.workarea)
             self.cursor_line = None
 
 
 class WiresBackground(WiresBase):
     def __init__(self, workarea, user_actions, wire_tools):
-        super(WiresBackground, self).__init__(workarea, user_actions, wire_tools)
+        super(WiresBackground, self).__init__(workarea,
+                                              user_actions,
+                                              wire_tools)
         self.manager = Manager(workarea)
         self.wire_click_margin = 10
         workarea.user_actions.element_relocated.connect(self.on_element_relocated)
@@ -88,12 +102,15 @@ class WiresBackground(WiresBase):
         workarea.diagram.connection_deleted.connect(self.on_connection_deleted)
 
     def draw_wires(self, painter):
-        # all lines could be potentially drawn as a single QPainterPath for better performance,
-        # but this would break nice covering of wires by other wires
+        # all lines could be potentially drawn as a single QPainterPath
+        # for better performance, but this would break nice covering of
+        # wires by other wires
         for wire in self.manager.wires:
             if wire.selected:
-                painter.strokePath(wire.line, self.wire_tools.pen_selected_background.line)
-                painter.strokePath(wire.line, self.wire_tools.pen_selected.line)
+                painter.strokePath(wire.line,
+                                   self.wire_tools.pen_selected_background.line)
+                painter.strokePath(wire.line,
+                                   self.wire_tools.pen_selected.line)
             else:
                 painter.strokePath(wire.line, self.wire_tools.pen_regular.line)
 
@@ -133,7 +150,7 @@ class WiresBackground(WiresBase):
 
     def unselect_wires(self):
         for w in self.manager.wires:
-           w.selected = False
+            w.selected = False
         self.update()
 
 
@@ -169,7 +186,8 @@ class Wire:
         self.selected = False
         if self.manager is not None:
             diagram = self.manager.workarea.diagram
-            diagram.disconnect_io(self.start_widget.io_handle, self.end_widget.io_handle)
+            diagram.disconnect_io(self.start_widget.io_handle,
+                                  self.end_widget.io_handle)
 
     def update_position(self):
         if self.start_widget is None or self.end_widget is None:
@@ -183,7 +201,10 @@ class Wire:
         for i in range(len(self.line_points) - 1):
             point_a = self.line_points[i]
             point_b = self.line_points[i + 1]
-            if self.is_point_inside_line_segment(point_a, point_b, point, margin):
+            if self.is_point_inside_line_segment(point_a,
+                                                 point_b,
+                                                 point,
+                                                 margin):
                 return True
         return False
 
@@ -193,7 +214,8 @@ class Wire:
         right_margin = max(point_a.x(), point_b.x()) + margin
         top_margin = min(point_a.y(), point_b.y()) - margin
         bottom_margin = max(point_a.y(), point_b.y()) + margin
-        if left_margin < point.x() < right_margin and top_margin < point.y() < bottom_margin:
+        if left_margin < point.x() < right_margin \
+                and top_margin < point.y() < bottom_margin:
             return True
         else:
             return False
@@ -204,9 +226,12 @@ class Wire:
 
     def prepare_paths(self):
         self.line_points = self.get_line_points()
-        self.arrow_points = self.workarea.wire_tools.get_arrow_points(self.end_point)
-        self.line = self.workarea.wire_tools.get_path_from_points(self.line_points)
-        self.arrow = self.workarea.wire_tools.get_path_from_points(self.arrow_points)
+        self.arrow_points = \
+            self.workarea.wire_tools.get_arrow_points(self.end_point)
+        self.line = \
+            self.workarea.wire_tools.get_path_from_points(self.line_points)
+        self.arrow = \
+            self.workarea.wire_tools.get_path_from_points(self.arrow_points)
 
     def get_line_points(self):
         points = []
@@ -215,16 +240,21 @@ class Wire:
         points.append(start)
 
         # Determine the optimal shape of the wire
-        if end.x() > start.x() and end.y() == start.y():    # 1-segment, vertical wire
+        if end.x() > start.x() and end.y() == start.y():
+            # 1-segment, vertical wire
             # no middle points are needed
             pass
 
-        elif end.x() - start.x() > self.extender * 2:       # 3-segment wire, with horizontal line position optimized to omit Elements
+        elif end.x() - start.x() > self.extender * 2:
+            # 3-segment wire, with horizontal line position optimized
+            # to omit Elements
             mid_x = WireOptimizer.get_optimal_vertical_midline_x_position(self)
             points.append(QtCore.QPoint(mid_x, start.y()))
             points.append(QtCore.QPoint(mid_x, end.y()))
 
-        else:           # 5-segment wire, with vertical line position optimized to omit Elements
+        else:
+            # 5-segment wire, with vertical line position optimized
+            # to omit Elements
             mid_y = WireOptimizer.optimize_y_mid_point(self)
             points.append(QtCore.QPoint(start.x() + self.extender, start.y()))
             points.append(QtCore.QPoint(start.x() + self.extender, mid_y))
@@ -249,7 +279,6 @@ class Wire:
 
 
 class WireOptimizer:
-
     """
     Class optimizing two kinds of wires shapes:
 
@@ -262,34 +291,49 @@ class WireOptimizer:
                                        |-->
     """
 
-    DISTANCE = 20   # a minimum distance between a wire and an element (in the considered x or y direction)
+    # a minimum distance between a wire and an element
+    # (in the considered x or y direction)
+    DISTANCE = 20
 
     @staticmethod
     def get_optimal_vertical_midline_x_position(wire):
 
         """
-        Get optimal x position of a the vertical mid line of a 3-segment wire, which omits other Elements in the Workarea.
-        If omitting is not possible, return the middle between the wire start and end points.
-        """
+        Get optimal x position of a the vertical mid line of a 3-segment wire,
+        which omits other Elements in the Workarea.
+        If omitting is not possible, return the middle between the wire start
+        and end points.
 
+        """
         elements = WireOptimizer.get_all_colliding_elements(wire)
         min_x, max_x = WireOptimizer.get_valid_x_range(wire, elements)
         mid_x = (wire.start_point.x() + wire.end_point.x())//2
         x = min(max(mid_x, min_x), max_x)
-        element_left = element_right = WireOptimizer.get_colliding_element_by_x(wire, x, elements)
+        element_left = element_right = \
+            WireOptimizer.get_colliding_element_by_x(wire, x, elements)
+
         _continue = True
-        while (_continue):
+
+        while _continue:
             _continue = False
             if element_right is not None:
-                midx_right = element_right.x() + element_right.width() + WireOptimizer.DISTANCE
-                element_right = WireOptimizer.get_colliding_element_by_x(wire, midx_right, elements)
+                midx_right = \
+                    element_right.x() + element_right.width() + WireOptimizer.DISTANCE
+                element_right = \
+                    WireOptimizer.get_colliding_element_by_x(wire,
+                                                             midx_right,
+                                                             elements)
                 if midx_right < max_x:
                     if element_right is None:
                         return midx_right
                     _continue = True
+
             if element_left is not None:
                 midx_left = element_left.x() - WireOptimizer.DISTANCE
-                element_left = WireOptimizer.get_colliding_element_by_x(wire, midx_left, elements)
+                element_left = \
+                    WireOptimizer.get_colliding_element_by_x(wire,
+                                                             midx_left,
+                                                             elements)
                 if midx_left > min_x:
                     if element_left is None:
                         return midx_left
@@ -298,30 +342,39 @@ class WireOptimizer:
 
     @staticmethod
     def optimize_y_mid_point(wire):
-
         """
-        Get optimal y position of a the horizontal mid line of a 5-segment wire, which omits other Elements in the Workarea.
-        If omitting is not possible, return the middle between the wire start and end points.
+        Get optimal y position of a the horizontal mid line of a 5-segment wire,
+        which omits other Elements in the Workarea.
+        If omitting is not possible, return the middle between the wire start
+        and end points.
         """
-
         elements = WireOptimizer.get_all_colliding_elements(wire, wire.extender)
         min_y, max_y = WireOptimizer.get_valid_y_range(wire, elements)
         mid_y = (wire.start_point.y() + wire.end_point.y())//2
         y = min(max(mid_y, min_y), max_y)
-        element_top = element_bottom = WireOptimizer.get_colliding_element_by_y(wire, y, elements)
+        element_top = element_bottom = \
+            WireOptimizer.get_colliding_element_by_y(wire, y, elements)
+
         _continue = True
+
         while _continue:
             _continue = False
             if element_bottom is not None:
-                midy_bottom = element_bottom.y() + element_bottom.height() + WireOptimizer.DISTANCE
-                element_bottom = WireOptimizer.get_colliding_element_by_y(wire, midy_bottom, elements)
+                midy_bottom = \
+                    element_bottom.y() + element_bottom.height() + WireOptimizer.DISTANCE
+                element_bottom = \
+                    WireOptimizer.get_colliding_element_by_y(wire,
+                                                             midy_bottom,
+                                                             elements)
                 if midy_bottom < max_y:
                     if element_bottom is None:
                         return midy_bottom
                     _continue = True
             if element_top is not None:
                 midy_top = element_top.y() - WireOptimizer.DISTANCE
-                element_top = WireOptimizer.get_colliding_element_by_y(wire, midy_top, elements)
+                element_top = WireOptimizer.get_colliding_element_by_y(wire,
+                                                                       midy_top,
+                                                                       elements)
                 if midy_top > min_y:
                     if element_top is None:
                         return midy_top
@@ -364,14 +417,15 @@ class WireOptimizer:
 
     @staticmethod
     def get_all_colliding_elements(wire, x_extension=0):
-
         """
-        Get list of all elements utterly or partly lying on the rectangle defined by start and end points of the wire.
+        Get list of all elements utterly or partly lying on the rectangle
+        defined by start and end points of the wire.
 
         param: wire: The considered wire
-        param: x_extension: A value by which the rectangle is extended both on the right and left
-        """
+        param: x_extension: A value by which the rectangle is extended both
+        on the right and left
 
+        """
         elements = []
         top, bottom = sorted([wire.start_point.y(), wire.end_point.y()])
         left, right = sorted([wire.start_point.x(), wire.end_point.x()])
@@ -394,7 +448,6 @@ class WireOptimizer:
                         elements.append(element)
                         break
         return elements
-
 
     @staticmethod
     def is_point_in_rect(point, rect):
@@ -424,13 +477,17 @@ class Manager:
 
     def create_wire_if_not_exists(self, output_connector, input_connector):
         wire_exists = False
+
         for wire in self.wires:
-            if wire.start_widget == output_connector and wire.end_widget == input_connector:
+            if wire.start_widget == output_connector \
+                    and wire.end_widget == input_connector:
                 wire_exists = True
+
         if not wire_exists:
             wire = Wire(output_connector, input_connector, self)
             self.wires.append(wire)
-            self.connectors_map[(output_connector.io_handle, input_connector.io_handle)] = wire
+            self.connectors_map[(output_connector.io_handle,
+                                 input_connector.io_handle)] = wire
 
     def remove_wire_by_connectors(self, output, input_):
         key = (output, input_)
@@ -446,6 +503,7 @@ class Manager:
                 if key in self.connectors_map:
                     wire = self.connectors_map[key]
                     wire.update_position()
+
         for output in element.outputs.values():
             for input_ in output.connected_to:
                 key = (output, input_)
@@ -463,7 +521,6 @@ class WirePen:
 
 
 class WireTools:
-
     def __init__(self, style_manager):
         self.pen_regular = None
         self.pen_selected = None
@@ -485,8 +542,9 @@ class WireTools:
         self.pen_selected = WirePen(self.wire_style.pen_selected_color,
                                     self.wire_style.pen_selected_size,
                                     dotted=True)
-        self.pen_selected_background = WirePen(self.wire_style.pen_selected_bg_color,
-                                               self.wire_style.pen_selected_bg_size)
+        self.pen_selected_background = \
+            WirePen(self.wire_style.pen_selected_bg_color,
+                    self.wire_style.pen_selected_bg_size)
 
     def get_arrow_points(self, point):
         points = []
@@ -542,7 +600,9 @@ class WireStyle:
         self.simple_parse_qss(stylesheet)
 
     def simple_parse_qss(self, stylesheet):
-        sheet = tinycss2.parse_stylesheet(str(stylesheet), skip_comments=True, skip_whitespace=True)
+        sheet = tinycss2.parse_stylesheet(str(stylesheet),
+                                          skip_comments=True,
+                                          skip_whitespace=True)
         for rule in sheet:
             name = tinycss2.parse_one_component_value(rule.prelude)
             if name.type == 'error':
@@ -553,7 +613,9 @@ class WireStyle:
                     if dec.type == 'declaration':
                         for token in dec.value:
                             if token.type in ['ident', 'hash', 'dimension']:
-                                self.update_style(dec.name, token.value, token.type)
+                                self.update_style(dec.name,
+                                                  token.value,
+                                                  token.type)
 
     def update_style(self, name, value, token_type):
         attribute_name = name.replace("-", "_")

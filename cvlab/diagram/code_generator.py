@@ -1,3 +1,7 @@
+# coding: utf-8
+
+r"""Code generator"""
+
 from ..core.core_element import CoreElement
 from .connectors import Input, Output
 
@@ -267,7 +271,8 @@ class CodeGenerator:
         inputs = ", ".join(self.inputs)
         code = self.code.replace("\n", "\n    ")
         output = self.output
-        process_function = "def process({inputs}):\n    {code}\n    return {output}\n".format(**locals())
+        process_function = \
+            "def process({inputs}):\n    {code}\n    return {output}\n".format(**locals())
 
         return file_template.format(**locals())
 
@@ -279,28 +284,46 @@ class CodeGenerator:
         self.elem_cnt += 1
         element_name = element.__class__.__name__.lower() + str(self.elem_cnt)
         func_name, func_code, input_names = element.get_source()
-        self.inputs.update(["{element_name}_{input_name}".format(element_name=element_name, input_name=input_name) for input_name in input_names])
+        self.inputs.update(
+            ["{element_name}_{input_name}".format(element_name=element_name,
+                                                  input_name=input_name)
+             for input_name
+             in input_names])
+
         if func_code:
             self.functions[func_code] = func_name
+
         if element is self.base_element:
             self.output = element_name
+
         inputs = {}  # input name -> value
+
         for input in element.inputs.values():
             assert isinstance(input, Input)
+
             for output in input.connected_from:
                 assert isinstance(output, Output)
                 in_elem = output.parent
+
                 if in_elem not in self.elem_names:
                     self.elem_names[in_elem] = self.process(in_elem)
+
                 value = '{}["{}"]'.format(self.elem_names[in_elem], output.name)
+
                 if input.multiple:
                     multi_number = len(inputs)
                     inputs[input.name + str(multi_number)] = value
                 else:
                     inputs[input.name] = value
+
         if func_code:
-            inputs = "{" + ",".join(['"{}":{}'.format(input_name, value) for input_name, value in inputs.items()]) + "}"
-            params = "{" + ",".join(['"{}":{}'.format(param_name, repr(value.get())) for param_name, value in element.parameters.items()]) + "}"
+            inputs = "{" + ",".join(['"{}":{}'.format(input_name, value)
+                                     for input_name, value
+                                     in inputs.items()]) + "}"
+            params = "{" + ",".join(['"{}":{}'.format(param_name,
+                                                      repr(value.get()))
+                                     for param_name, value
+                                     in element.parameters.items()]) + "}"
             self.code += """\
 {element_name} = {{}}
 {func_name}({inputs}, {element_name}, {params})
@@ -314,4 +337,3 @@ class CodeGenerator:
 
 def generate(element):
     return CodeGenerator(element).generate()
-

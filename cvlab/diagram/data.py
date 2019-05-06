@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+r"""Data"""
+
 from collections import defaultdict
 from threading import Lock, RLock
 
@@ -52,7 +57,9 @@ class Data:
             if self._type == self.SEQUENCE:
                 return Sequence([d.copy() for d in self._value])
             elif self._type == self.IMAGE:
-                if self._value is None or (hasattr(self._value, "size") and not len(self._value)):
+                if self._value is None \
+                        or (hasattr(self._value, "size")
+                            and not len(self._value)):
                     pass
                 return ImageData(self._value)
             else:
@@ -86,15 +93,24 @@ class Data:
 
     def is_compatible(self, other):
         assert isinstance(other, Data)
-        if self._type != other._type: return False
+
+        if self._type != other._type:
+            return False
+
         if self._type == Data.SEQUENCE:
-            if len(self._value) != len(other._value): return False
-            return all(mine.is_compatible(her) for mine, her in zip(self._value, other._value))
+            if len(self._value) != len(other._value):
+                return False
+            return all(mine.is_compatible(her)
+                       for mine, her
+                       in zip(self._value, other._value))
         return True
 
     def type(self):
         with self.lock:
-            if self._value is None or (self._type == Data.IMAGE and hasattr(self.value, "size") and not self._value.size):
+            if self._value is None \
+                    or (self._type == Data.IMAGE
+                        and hasattr(self.value, "size")
+                        and not self._value.size):
                 return Data.NONE
             else:
                 return self._type
@@ -120,8 +136,10 @@ class Data:
     def desequence_all(self):
         """Returns a one-dimensional array with all sequence values"""
         with self.lock:
-            if self._type == Data.NONE: return [None]
-            if self._type == Data.IMAGE: return [self._value]
+            if self._type == Data.NONE:
+                return [None]
+            if self._type == Data.IMAGE:
+                return [self._value]
             if self._type == Data.SEQUENCE:
                 t = []
                 for d in self._value:
@@ -141,7 +159,9 @@ class Data:
 
     def create_placeholder(self):
         if self._type == Data.SEQUENCE:
-            return Data([d.create_placeholder() for d in self._value], Data.SEQUENCE)
+            return Data([d.create_placeholder()
+                         for d
+                         in self._value], Data.SEQUENCE)
         else:
             return Data()
 
@@ -150,7 +170,10 @@ class Data:
 
     def __repr__(self):
         id_ = "0x{:08X}".format(id(self))
-        if self._type == Data.NONE: return '<Data [empty] at {}>'.format(id_)
+
+        if self._type == Data.NONE:
+            return '<Data [empty] at {}>'.format(id_)
+
         if self.type() == Data.IMAGE:
             try:
                 shape = "?"
@@ -158,8 +181,12 @@ class Data:
                 shape = self._value.shape
             except Exception:
                 pass
+
             return '<Data [image {}] at {}>'.format(shape, id_)
-        if self.type() == Data.NONE: return "<Data [empty image] at {}>".format(id_)
+
+        if self.type() == Data.NONE:
+            return "<Data [empty image] at {}>".format(id_)
+
         if self.type() == Data.SEQUENCE:
             s = ""
             images_count = 0
@@ -179,6 +206,7 @@ class Data:
                 s = s.rstrip(', ')
             s = '<Sequence ' + '[' + s + '] at {}>'.format(id_)
             return s
+
         raise TypeError("Wrong data type - cannot desequence")
 
     def __bool__(self):
@@ -187,17 +215,23 @@ class Data:
     ready = __bool__
 
     def __eq__(self, other):
-        if not isinstance(other, Data): return False
+        if not isinstance(other, Data):
+            return False
+
         with self.lock, other.lock:
-            if self.type() != other.type(): return False
+            if self.type() != other.type():
+                return False
             if self.type() == Data.SEQUENCE:
-                if len(self._value) != len(other._value): return False
+                if len(self._value) != len(other._value):
+                    return False
                 assert all(isinstance(d, Data) for d in self._value)
                 assert all(isinstance(d, Data) for d in other._value)
                 return all(a == b for a, b in zip(self._value, other._value))
             else:
                 return self._value is other._value
-                # todo: if we want logical equality rather than reference equality, we shall use this:
+
+                # todo: if we want logical equality rather
+                #       than reference equality, we shall use this:
                 # elif self.type() == Data.IMAGE:
                 # #assert isinstance(self._value, np.ndarray)
                 # return self._value is other._value and np.array_equal(self._value, other._value)
@@ -222,7 +256,6 @@ def ImageData(value=None):
     return Data(value, Data.IMAGE)
 
 
-
 class DataSet:
     def __init__(self, inputs=None, parameters=None, outputs=None):
         self.inputs = inputs if inputs is not None else {}
@@ -235,10 +268,12 @@ class DataSet:
             d.clear()
 
     def __eq__(self, other):
-        return self.parameters == other.parameters and self.inputs == other.inputs
+        return self.parameters == other.parameters \
+               and self.inputs == other.inputs
 
     def __str__(self):
-        return "DataSet(" + repr(self.inputs) + ", " + repr(self.parameters) + ", " + repr(self.outputs) + ")"
+        return "DataSet(" + repr(self.inputs) + ", " \
+               + repr(self.parameters) + ", " + repr(self.outputs) + ")"
 
     __repr__ = __str__
 
@@ -270,8 +305,10 @@ class ProcessingUnit(DataSet):
             input.remove_observer(self.data_changed, True)
 
     def __str__(self):
-        return "ProcessingUnit(" + repr(self.inputs) + ", " + repr(self.parameters) + ", " + repr(
-            self.outputs) + ", calculated=" + repr(self.calculated) + ", ready_to_execute=" + repr(
+        return "ProcessingUnit(" + repr(self.inputs) + ", " \
+               + repr(self.parameters) + ", " + repr(self.outputs) \
+               + ", calculated=" + repr(self.calculated) \
+               + ", ready_to_execute=" + repr(
             self.ready_to_execute()) + ")"
 
     __repr__ = __str__
@@ -281,4 +318,3 @@ class ProcessingUnit(DataSet):
 
     def __eq__(self, other):
         return self is other
-

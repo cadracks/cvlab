@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+r"""Operator elements"""
+
 from copy import *
 
 from .base import *
@@ -26,7 +31,8 @@ class MinusOperator(NormalElement):
         return [Input("from"), Input("what")], [Output("output")], []
 
     def process_inputs(self, inputs, outputs, parameters):
-        outputs["output"] = Data(cv.subtract(inputs["from"].value, inputs["what"].value))
+        outputs["output"] = Data(cv.subtract(inputs["from"].value,
+                                             inputs["what"].value))
 
 
 class AbsDiffOperator(NormalElement):
@@ -34,10 +40,14 @@ class AbsDiffOperator(NormalElement):
     comment = "Calculates absolute difference between images"
 
     def get_attributes(self):
-        return [Input("1", "Input 1"), Input("2", "Input 2")], [Output("output")], []
+        return [Input("1", "Input 1"),
+                Input("2", "Input 2")],\
+               [Output("output")],\
+               []
 
     def process_inputs(self, inputs, outputs, parameters):
-        outputs["output"] = Data(cv.absdiff(inputs["1"].value, inputs["2"].value))
+        outputs["output"] = Data(cv.absdiff(inputs["1"].value,
+                                            inputs["2"].value))
 
 
 class AverageOperator(MultiInputOneOutputElement):
@@ -83,7 +93,7 @@ class MinOperator(MultiInputOneOutputElement):
 
 
 class InvertOperator(NormalElement):
-    name = "Invertion operator"
+    name = "Inversion operator"
     comment = "Inverts pixel values"
 
     def get_attributes(self):
@@ -95,18 +105,22 @@ class InvertOperator(NormalElement):
 
 class ScalarMultiplyOperator(NormalElement):
     name = "Scalar multiply"
-    comment = "Multiplies matrice by scalar"
+    comment = "Multiplies matrix by scalar"
 
     def get_attributes(self):
-        return [Input("input")], [Output("output")], [FloatParameter("factor", min_=0, max_=10)]
+        return [Input("input")], \
+               [Output("output")],\
+               [FloatParameter("factor", min_=0, max_=10)]
 
     def process_inputs(self, inputs, outputs, parameters):
         input_ = inputs["input"].value
         factor = parameters["factor"]
+
         if len(input_.shape) == 2:
             output = cv.multiply(input_, factor)
         else:
             output = cv.multiply(input_, (factor, factor, factor, factor))
+
         outputs["output"] = Data(output)
 
 
@@ -115,15 +129,19 @@ class ScalarAddOperator(NormalElement):
     comment = "Adds constant value to each matrix element"
 
     def get_attributes(self):
-        return [Input("input")], [Output("output")], [FloatParameter("value", min_=-255, max_=255)]
+        return [Input("input")],\
+               [Output("output")],\
+               [FloatParameter("value", min_=-255, max_=255)]
 
     def process_inputs(self, inputs, outputs, parameters):
         input_ = inputs["input"].value
         value = parameters["value"]
+
         if len(input_.shape) == 2:
             output = cv.add(input_, value)
         else:
             output = cv.add(input_, (value, value, value, value))
+
         outputs["output"] = Data(output)
 
 

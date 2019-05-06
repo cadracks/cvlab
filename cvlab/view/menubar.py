@@ -1,3 +1,7 @@
+# coding: utf-8
+
+r"""UI menu bar"""
+
 from distutils.util import strtobool
 
 from PyQt5.QtCore import Qt, pyqtSlot
@@ -85,7 +89,9 @@ class SaveAction(Action):
 
 class CloseDiagramAction(Action):
     def __init__(self, parent, main_window):
-        super(CloseDiagramAction, self).__init__('Close diagram', parent, main_window)
+        super(CloseDiagramAction, self).__init__('Close diagram',
+                                                 parent,
+                                                 main_window)
         self.setShortcut(QKeySequence(Qt.CTRL + Qt.Key_W))
         self.triggered.connect(self.close)
 
@@ -114,7 +120,8 @@ class ColorThemeMenu(QMenu):
 
     def fill_styles(self):
         styles = self.main_window.style_manager.get_available_stylesheets()
-        current = self.main_window.settings.get_with_default(config.VIEW_SECTION, config.STYLE)
+        current = self.main_window.settings.get_with_default(config.VIEW_SECTION,
+                                                             config.STYLE)
         for style in styles:
             action = self.addAction(style)
             action.setCheckable(True)
@@ -155,10 +162,12 @@ class HighQualityAction(Action):
 
 class LivePreviewsAction(Action):
     def __init__(self, parent, main_window):
-        super(LivePreviewsAction, self).__init__('&Show live results', parent, main_window)
+        super(LivePreviewsAction, self).__init__('&Show live results',
+                                                 parent,
+                                                 main_window)
         self.setCheckable(True)
-        self.value = bool(strtobool(self.settings.get_with_default(config.VIEW_SECTION,
-                                                                   config.LIVE_IMAGE_PREVIEW_OPTION)))
+        self.value = bool(strtobool(self.settings.get_with_default(
+            config.VIEW_SECTION, config.LIVE_IMAGE_PREVIEW_OPTION)))
         self.setChecked(self.value)
         self.triggered.connect(self.switch)
 
@@ -166,14 +175,19 @@ class LivePreviewsAction(Action):
     def switch(self):
         self.value = not self.value
         self.setChecked(self.value)
-        self.settings.set(config.VIEW_SECTION, config.LIVE_IMAGE_PREVIEW_OPTION, self.value)
+        self.settings.set(config.VIEW_SECTION,
+                          config.LIVE_IMAGE_PREVIEW_OPTION,
+                          self.value)
 
 
 class PreviewOnTopAction(Action):
     def __init__(self, parent, main_window):
-        super(PreviewOnTopAction, self).__init__('&Preview always on top', parent, main_window)
+        super(PreviewOnTopAction, self).__init__('&Preview always on top',
+                                                 parent,
+                                                 main_window)
         self.setCheckable(True)
-        self.value = bool(strtobool(self.settings.get_with_default(config.VIEW_SECTION, config.PREVIEW_ON_TOP_OPTION)))
+        self.value = bool(strtobool(self.settings.get_with_default(
+            config.VIEW_SECTION, config.PREVIEW_ON_TOP_OPTION)))
         self.setChecked(self.value)
         self.triggered.connect(self.switch)
 
@@ -181,7 +195,9 @@ class PreviewOnTopAction(Action):
     def switch(self):
         self.value = not self.value
         self.setChecked(self.value)
-        self.settings.set(config.VIEW_SECTION, config.PREVIEW_ON_TOP_OPTION, self.value)
+        self.settings.set(config.VIEW_SECTION,
+                          config.PREVIEW_ON_TOP_OPTION,
+                          self.value)
 
 
 class ResetZoomAction(Action):
@@ -199,9 +215,11 @@ class ResetZoomAction(Action):
 
 class ExperimentalElementsAction(Action):
     def __init__(self, parent, main_window):
-        super(ExperimentalElementsAction, self).__init__('&Experimental elements', parent, main_window)
+        super(ExperimentalElementsAction, self).__init__(
+            '&Experimental elements', parent, main_window)
         self.setCheckable(True)
-        self.value = bool(strtobool(self.settings.get_with_default(config.ELEMENTS_SECTION, config.EXPERIMENTAL_ELEMENTS)))
+        self.value = bool(strtobool(self.settings.get_with_default(
+            config.ELEMENTS_SECTION, config.EXPERIMENTAL_ELEMENTS)))
         self.setChecked(self.value)
         self.triggered.connect(self.toggle)
 
@@ -209,5 +227,10 @@ class ExperimentalElementsAction(Action):
     def toggle(self):
         self.value = not self.value
         self.setChecked(self.value)
-        self.settings.set(config.ELEMENTS_SECTION, config.EXPERIMENTAL_ELEMENTS, self.value)
-        QMessageBox.information(None, "Information", "You must restart CV Lab to enable/disable experimental elements.")
+        self.settings.set(config.ELEMENTS_SECTION,
+                          config.EXPERIMENTAL_ELEMENTS,
+                          self.value)
+        QMessageBox.information(
+            None,
+            "Information",
+            "You must restart CV Lab to enable/disable experimental elements.")

@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+r"""Blur elements"""
+
 from .base import *
 
 
@@ -13,7 +18,6 @@ class OpenCVBlur(NormalElement):
     def process_inputs(self, inputs, outputs, parameters):
         ratio = parameters["ratio"]
         outputs["output"] = Data(cv.blur(inputs["input"].value, (ratio, ratio)))
-
 
 
 class GaussianBlur3D(NormalElement):
@@ -50,4 +54,3 @@ class GaussianBlur3D(NormalElement):
 
 
 register_elements_auto(__name__, locals(), "Filters", 5)
-

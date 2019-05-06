@@ -1,7 +1,13 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+r"""Color elements"""
+
 from .base import *
 
 
 class ColorNormalizer(NormalElement):
+    r"""Color normalization element"""
     name = "Color normalizer"
     comment = "Normalizes each color by given mean and standard deviation"
 
@@ -17,7 +23,9 @@ class ColorNormalizer(NormalElement):
         outstddev = parameters["std dev"]
 
         mean, stddev = cv.meanStdDev(image)
-        if stddev == 0: stddev = 1
+
+        if stddev == 0:
+            stddev = 1
 
         output = (image.astype(np.float32) - mean) * (outstddev/stddev) + outmean
 
@@ -31,10 +39,8 @@ class OpenCVInRange(NormalElement):
     def get_attributes(self):
         return [Input("input")], \
                [Output("output")], \
-               [
-                    IntParameter("min val", "Minimum value", 0, min_=0, max_=255),
-                    IntParameter("max val", "Maximum value", 255, min_=0, max_=255)
-               ]
+               [IntParameter("min val", "Minimum value", 0, min_=0, max_=255),
+                IntParameter("max val", "Maximum value", 255, min_=0, max_=255)]
 
     def process_inputs(self, inputs, outputs, parameters):
         image = np.copy(inputs["input"].value)
@@ -52,14 +58,18 @@ class OpenCVInRange3D(NormalElement):
     def get_attributes(self):
         return [Input("input")], \
                [Output("output")], \
-               [
-                    IntParameter("1 min val", "1:Minimum value", 0, min_=0, max_=255),
-                    IntParameter("1 max val", "1:Maximum value", 255, min_=0, max_=255),
-                    IntParameter("2 min val", "2:Minimum value", 0, min_=0, max_=255),
-                    IntParameter("2 max val", "2:Maximum value", 255, min_=0, max_=255),
-                    IntParameter("3 min val", "3:Minimum value", 0, min_=0, max_=255),
-                    IntParameter("3 max val", "3:Maximum value", 255, min_=0, max_=255)
-               ]
+               [IntParameter("1 min val", "1:Minimum value",
+                             0, min_=0, max_=255),
+                IntParameter("1 max val", "1:Maximum value",
+                             255, min_=0, max_=255),
+                IntParameter("2 min val", "2:Minimum value",
+                             0, min_=0, max_=255),
+                IntParameter("2 max val", "2:Maximum value",
+                             255, min_=0, max_=255),
+                IntParameter("3 min val", "3:Minimum value",
+                             0, min_=0, max_=255),
+                IntParameter("3 max val", "3:Maximum value",
+                             255, min_=0, max_=255)]
 
     def process_inputs(self, inputs, outputs, parameters):
         image = np.copy(inputs["input"].value)
@@ -75,20 +85,23 @@ class OpenCVInRange3D(NormalElement):
 
 
 class ContrastChange(NormalElement):
+    r"""Element to change the contrast"""
     name = "Contrast change"
     comment = "Changes contrast of the image"
 
     def get_attributes(self):
-        return [Input("input")], \
-               [Output("output")], \
-               [FloatParameter("factor")]
+        return [Input("input")], [Output("output")], [FloatParameter("factor")]
 
     def process_channels(self, inputs, outputs, parameters):
         image = inputs["input"].value
 
         avg = cv.mean(image)
-        output = cv.add(cv.subtract(np.float64(image), avg) * parameters["factor"], avg)
-        output = cv.add(np.zeros(output.shape, image.dtype), output, dtype=cvtypes[image.dtype.name])
+        output = \
+            cv.add(cv.subtract(np.float64(image), avg) * parameters["factor"],
+                   avg)
+        output = cv.add(np.zeros(output.shape, image.dtype),
+                        output,
+                        dtype=cvtypes[image.dtype.name])
 
         outputs["output"] = Data(output)
 

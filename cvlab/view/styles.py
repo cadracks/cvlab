@@ -1,3 +1,7 @@
+# coding: utf-8
+
+r"""UI Styles"""
+
 import os
 from PyQt5.QtCore import QTimer, pyqtSignal, QObject
 from PyQt5.QtWidgets import *
@@ -5,9 +9,9 @@ from PyQt5.QtWidgets import *
 from cvlab.view.wires import WireStyle
 from . import config
 
-
-AUTO_REFRESH_STYLESHEET = 0     # Use 1 when working on stylesheets (warning: option causes some artifacts, like flickering
-                                # menu bar and disappearing stylesheet when opening File Dialog)
+# Use 1 when working on stylesheets (warning: option causes some artifacts,
+# like flickering menu bar and disappearing stylesheet when opening File Dialog)
+AUTO_REFRESH_STYLESHEET = 0
 
 
 class StyleManager(QObject):
@@ -30,9 +34,13 @@ class StyleManager(QObject):
 
     def apply_stylesheet(self, style_name):
         style_name = str(style_name)
-        selected_style_path = os.path.join(self.styles_dir, style_name, style_name + ".stylesheet")
-        common_style_path = os.path.normpath(self.styles_dir + "/common.stylesheet")
-        highdpi_style_path = os.path.normpath(self.styles_dir + "/highdpi.stylesheet")
+        selected_style_path = os.path.join(self.styles_dir,
+                                           style_name,
+                                           style_name + ".stylesheet")
+        common_style_path = os.path.normpath(
+            self.styles_dir + "/common.stylesheet")
+        highdpi_style_path = os.path.normpath(
+            self.styles_dir + "/highdpi.stylesheet")
         stylesheet = ""
         try:
             # Common
@@ -53,7 +61,8 @@ class StyleManager(QObject):
 
         # Switch background for highdpi
         if self.is_highdpi:
-            stylesheet = stylesheet.replace("background.png", "background-highdpi.png")
+            stylesheet = stylesheet.replace("background.png",
+                                            "background-highdpi.png")
 
         self.main_window.setStyleSheet(stylesheet)
 
@@ -64,15 +73,22 @@ class StyleManager(QObject):
         self.style_changed.emit()
 
         # Update settings
-        current_style = self.main_window.settings.get_with_default(config.VIEW_SECTION, config.STYLE)
+        current_style = self.main_window.settings.get_with_default(
+            config.VIEW_SECTION, config.STYLE)
+
         if style_name == config.DEFAULTS[config.VIEW_SECTION][config.STYLE]:
-            if self.main_window.settings.has_option(config.VIEW_SECTION, config.STYLE):
-                self.main_window.settings.remove_option(config.VIEW_SECTION, config.STYLE)
+            if self.main_window.settings.has_option(config.VIEW_SECTION,
+                                                    config.STYLE):
+                self.main_window.settings.remove_option(config.VIEW_SECTION,
+                                                        config.STYLE)
         elif style_name != current_style:
-            self.main_window.settings.set(config.VIEW_SECTION, config.STYLE, style_name)
+            self.main_window.settings.set(config.VIEW_SECTION,
+                                          config.STYLE,
+                                          style_name)
 
     def apply_default_stylesheet(self):
-        current_style = self.main_window.settings.get_with_default(config.VIEW_SECTION, config.STYLE)
+        current_style = self.main_window.settings.get_with_default(
+            config.VIEW_SECTION, config.STYLE)
         if current_style is not None:
             self.apply_stylesheet(current_style)
 

@@ -1,3 +1,7 @@
+# coding: utf-8
+
+r"""Hooks definition"""
+
 from ..diagram.diagram import Diagram
 from ..diagram.interface import *
 
@@ -33,15 +37,16 @@ class Hook(QObject, object):
 
 class InputHook(Hook):
     """Hook for getting some input"""
-
     def __init__(self, connector):
         super(InputHook, self).__init__(connector)
         assert isinstance(self.connector, Input)
         self.sequence_indices = OrderedDict()
+
         if not self.connector.optional:
             self.empty_data = Sequence() if self.connector.multiple else EmptyData()
         else:
             self.empty_data = EmptyOptionalData()
+
         self.data = self.empty_data
 
     def get_data(self):
@@ -50,6 +55,7 @@ class InputHook(Hook):
     def set_data(self, data, from_hook):
         assert data is not None
         assert from_hook is not None
+
         if self.connector.multiple:
             with self.lock:
                 assert from_hook in self.sequence_indices
@@ -59,8 +65,10 @@ class InputHook(Hook):
                 self.data.value[index] = data
         else:
             with self.lock:
-                if self.data is data: return
+                if self.data is data:
+                    return
                 self.data = data
+
         self.connector.parent.recalculate(False, True, True)
 
     def delete(self):
@@ -68,6 +76,7 @@ class InputHook(Hook):
 
     def connected(self, from_hook):
         assert from_hook is not None
+
         if self.connector.multiple:
             with self.lock:
                 assert from_hook not in self.sequence_indices
@@ -80,17 +89,19 @@ class InputHook(Hook):
             with self.lock:
                 assert from_hook in self.sequence_indices
                 del self.sequence_indices[from_hook]
-                self.data = Sequence([self.data.value[i] for i in self.sequence_indices.values()])
+                self.data = Sequence([self.data.value[i]
+                                      for i
+                                      in self.sequence_indices.values()])
                 for i, hook in enumerate(self.sequence_indices.keys()):
                     self.sequence_indices[hook] = i
         else:
             self.data = self.empty_data
+
         self.connector.parent.recalculate(False, True, True)
 
 
 class OutputHook(Hook):
     """Hook for giving output"""
-
     def __init__(self, connector):
         super(OutputHook, self).__init__(connector)
         assert isinstance(self.connector, Output)
@@ -100,12 +111,12 @@ class OutputHook(Hook):
     # gui thread only
     # @pyqtSlot(InputHook)
     def connected(self, to_hook):
-        self.actualize_outputs()  # fixme: to jest chyba nadmiarowe...
+        self.actualize_outputs()  # fixme: this is probably excessive...
 
     # gui thread only
     # @pyqtSlot(InputHook)
     def disconnected(self, to_hook):
-        self.actualize_outputs()  # fixme: to jest chyba nadmiarowe...
+        self.actualize_outputs()  # fixme: this is probably excessive...
 
     # element thread only
     # @pyqtSlot(object)
@@ -118,9 +129,12 @@ class OutputHook(Hook):
     # @pyqtSlot()
     def actualize_outputs(self):
         with Diagram.diagram_lock.reader, self.lock:
-            if self.connector.desequencing and self.data and self.data.type() == Data.SEQUENCE and len(
-                    self.connector.connected_to) > 1:
-                for input, data in zip(self.connector.connected_to, self.data.value):
+            if self.connector.desequencing \
+                    and self.data \
+                    and self.data.type() == Data.SEQUENCE \
+                    and len(self.connector.connected_to) > 1:
+                for input, data in zip(self.connector.connected_to,
+                                       self.data.value):
                     input.hook.set_data(data, self)
             else:
                 for i in self.connector.connected_to:
@@ -143,7 +157,6 @@ class InputQtHook(InputHook):
         self.set_data_signal.emit(data, from_hook)
 
 
-
 class OutputQtHook(OutputHook):
     set_data_signal = pyqtSignal(object)
     outdate_signal = pyqtSignal()
@@ -163,4 +176,3 @@ class OutputQtHook(OutputHook):
 
     def actualize_outputs(self):
         self.actualize_outputs_signal.emit()
-

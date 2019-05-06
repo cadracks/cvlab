@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+r"""hugin"""
+
 from cvlab.diagram.elements.base import *
 
 
@@ -19,8 +24,14 @@ class Enfuse(ProcessElement):
 
     def process_inputs(self, inputs, outputs, parameters):
         images = inputs['inputs'].desequence_all()
-        if any(image is None for image in images): raise Exception("Image is empty")
-        enfused = self.run_command(images, 1, exposure=0, saturation=0, contrast=1, hardmask="--hard-mask")
+        if any(image is None for image in images):
+            raise Exception("Image is empty")
+        enfused = self.run_command(images,
+                                   1,
+                                   exposure=0,
+                                   saturation=0,
+                                   contrast=1,
+                                   hardmask="--hard-mask")
         outputs["output"] = ImageData(enfused)
 
 
@@ -42,7 +53,8 @@ class AlignStack(ProcessElement):
 
     def process_inputs(self, inputs, outputs, parameters):
         images = inputs['inputs'].desequence_all()
-        if any(image is None for image in images): raise Exception("Image is empty")
+        if any(image is None for image in images):
+            raise Exception("Image is empty")
         aligned = self.run_command(images, 0)
         outputs["outputs"] = Sequence([ImageData(a) for a in aligned])
 

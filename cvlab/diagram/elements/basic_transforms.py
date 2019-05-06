@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+r"""Basic transformations"""
+
 from .base import *
 
 
@@ -8,10 +13,13 @@ class Resizer(NormalElement):
     def get_attributes(self):
         return [Input("input")], \
                [Output("output")], \
-               [IntParameter("width", value=120), IntParameter("height", value=120)]
+               [IntParameter("width", value=120),
+                IntParameter("height", value=120)]
 
     def process_inputs(self, inputs, outputs, parameters):
-        outputs["output"] = Data(cv.resize(inputs["input"].value, (parameters["width"], parameters["height"])))
+        outputs["output"] = Data(cv.resize(inputs["input"].value,
+                                           (parameters["width"],
+                                            parameters["height"])))
 
 
 class AutoResizer(NormalElement):
@@ -39,7 +47,8 @@ class Cropper(NormalElement):
                [Output("output")], \
                [IntParameter("width", min_=1, max_=10000, value=128),
                 IntParameter("height", min_=1, max_=10000, value=128),
-                FloatParameter("x", "x", 0.5, 0, 1), FloatParameter("y", "y", 0.5, 0, 1)]
+                FloatParameter("x", "x", 0.5, 0, 1),
+                FloatParameter("y", "y", 0.5, 0, 1)]
 
     def process_inputs(self, inputs, outputs, parameters):
         img = inputs["input"].value
@@ -51,7 +60,6 @@ class Cropper(NormalElement):
         outputs["output"] = Data(crop)
 
 
-
 class AutoCrop(NormalElement):
     name = "Auto cropper"
     comment = "Automatically removes borders from image"
@@ -59,7 +67,11 @@ class AutoCrop(NormalElement):
     def get_attributes(self):
         return [Input("input")], \
                [Output("output")], \
-               [FloatParameter("thr", "Threshold", 0), ComboboxParameter("thr_type", [("lighter", "lighter"), ("darker", "darker")], "Crop values")]
+               [FloatParameter("thr", "Threshold", 0),
+                ComboboxParameter("thr_type",
+                                  [("lighter", "lighter"),
+                                   ("darker", "darker")],
+                                  "Crop values")]
 
     def process_inputs(self, inputs, outputs, parameters):
         image = inputs["input"].value
@@ -69,12 +81,14 @@ class AutoCrop(NormalElement):
         if threshold_type == "lighter":
             if len(image.shape) == 3:
                 i = image.min(axis=2)
-            else: i = image
+            else:
+                i = image
             mask = i >= threshold
         elif threshold_type == "darker":
             if len(image.shape) == 3:
                 i = image.max(axis=2)
-            else: i = image
+            else:
+                i = image
             mask = i <= threshold
         else:
             raise Exception("Wrong threshold type")
@@ -99,4 +113,3 @@ class AutoCrop(NormalElement):
 
 
 register_elements_auto(__name__, locals(), "Transforms", 5)
-

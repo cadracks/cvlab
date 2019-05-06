@@ -1,3 +1,12 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+r"""Code elements
+
+Element that contain Python code
+
+"""
+
 from .base import *
 
 
@@ -17,7 +26,11 @@ class CodeElement(NormalElement):
                [TextParameter("code", value=u"import cv2 as cv\nimport numpy as np\n#your code here\nreturn None",
                               window_content="def fun(image=numpy.array, parameters={}, intpoint=func, memory={}):",
                               window_title="Code editor"),
-                ComboboxParameter("split_channels", OrderedDict([("Channels", True),("Image", False)]), "What to process", 1)]
+                ComboboxParameter("split_channels",
+                                  OrderedDict([("Channels", True),
+                                               ("Image", False)]),
+                                  "What to process",
+                                  1)]
 
     def compile(self, code):
         code = str(code)
@@ -31,12 +44,16 @@ class CodeElement(NormalElement):
         self.compiled_code = loc["fun"]
 
     def process_channels(self, inputs, outputs, parameters):
-        outputs["output"] = Data(self.compiled_code(inputs["input"].value, parameters, self.may_interrupt, self.memory))
+        outputs["output"] = Data(self.compiled_code(inputs["input"].value,
+                                                    parameters,
+                                                    self.may_interrupt,
+                                                    self.memory))
 
     def process_inputs(self, inputs, outputs, parameters):
         if self.compiled_code_str != parameters["code"]:
             self.compile(parameters["code"])
-        if not self.compiled_code: return
+        if not self.compiled_code:
+            return
         if parameters["split_channels"]:
             NormalElement.process_inputs(self, inputs, outputs, parameters)
         else:
@@ -65,13 +82,13 @@ def {name}(inputs, outputs, parameters):
         return name, source, []
 
 
-
-
 class CodeElementEx(CodeElement):
     name = "Code element (extended version)"
 
     def get_attributes(self):
-        return [Input("in1", optional=True), Input("in2", optional=True), Input("in3", optional=True),
+        return [Input("in1", optional=True),
+                Input("in2", optional=True),
+                Input("in3", optional=True),
                 Input("in4", optional=True)], \
                [Output("o1"), Output("o2"), Output("o3"), Output("o4")], \
                [TextParameter("code",
@@ -79,7 +96,11 @@ class CodeElementEx(CodeElement):
                                     u"None",
                               window_content="def fun(in1, in2, in3, in4, parameters={}, intpoint=func, memory={}):",
                               window_title="Code editor"),
-                ComboboxParameter("split_channels", OrderedDict([("Channels", True),("Image", False)]), "What to process", 1)]
+                ComboboxParameter("split_channels",
+                                  OrderedDict([("Channels", True),
+                                               ("Image", False)]),
+                                  "What to process",
+                                  1)]
 
     def compile(self, code):
         code = str(code)
@@ -96,11 +117,17 @@ class CodeElementEx(CodeElement):
 
     def process_channels(self, inputs, outputs, parameters):
         ins = [None] * 4
+
         for i in range(4):
             n = "in" + str(i + 1)
             if n in inputs and inputs[n]:
                 ins[i] = inputs[n].value
-        o = self.compiled_code(ins[0], ins[1], ins[2], ins[3], parameters, self.may_interrupt, self.memory)
+
+        o = self.compiled_code(ins[0], ins[1], ins[2], ins[3],
+                               parameters,
+                               self.may_interrupt,
+                               self.memory)
+
         for i, v in enumerate(o):
             n = "o" + str(i + 1)
             outputs[n] = Data(v)
@@ -108,7 +135,7 @@ class CodeElementEx(CodeElement):
     def get_source(self):
         # fixme: this won't work with 'process channels' set
         name = self.__class__.__name__.lower() + "_" + str(abs(hash(self)))[-8:]
-        fun_code = self.parameters["code"].get().replace("intpoint()", "").replace("\r\n","\n").replace("\n","\n\t").replace("\t","    ")
+        fun_code = self.parameters["code"].get().replace("intpoint()", "").replace("\r\n", "\n").replace("\n", "\n\t").replace("\t", "    ")
         source = """
 # inner code for {name}
 def {name}_fun(in1, in2, in3, in4, parameters, memory):
@@ -147,10 +174,13 @@ class CodeElementSequence(CodeElementEx, SequenceToSequenceElement):
 
     def get_processing_units(self, inputs, parameters):
         self.num_outputs = parameters["outputs"]
-        return SequenceToSequenceElement.get_processing_units(self, inputs, parameters)
+        return SequenceToSequenceElement.get_processing_units(self,
+                                                              inputs,
+                                                              parameters)
 
     def process_inputs(self, inputs, outputs, parameters):
-        if len(inputs["inputs"].value) == 0: raise Exception("Connect some inputs")
+        if len(inputs["inputs"].value) == 0:
+            raise Exception("Connect some inputs")
 
         if self.num_outputs != parameters['outputs']:
             self.recalculate(True, True, True, True)
@@ -158,10 +188,15 @@ class CodeElementSequence(CodeElementEx, SequenceToSequenceElement):
 
         if self.compiled_code_str != parameters["code"]:
             self.compile(parameters["code"])
-        if not self.compiled_code: return
+
+        if not self.compiled_code:
+            return
 
         inputs = inputs["inputs"].desequence_all()
-        o = self.compiled_code(inputs, parameters, self.may_interrupt, self.memory)
+        o = self.compiled_code(inputs,
+                               parameters,
+                               self.may_interrupt,
+                               self.memory)
         o = list(o)[:self.num_outputs]
         o += [None] * (self.num_outputs-len(o))
         outputs["output"] = Sequence([ImageData(d) for d in o])
@@ -179,6 +214,4 @@ class CodeElementSequence(CodeElementEx, SequenceToSequenceElement):
         self.compiled_code = loc["fun"]
 
 
-
 register_elements_auto(__name__, locals(), "Code", 10)
-

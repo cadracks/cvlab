@@ -1,3 +1,7 @@
+# coding: utf-8
+
+r"""UI Parameters"""
+
 from PyQt5 import QtCore
 from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtGui import *
@@ -53,9 +57,13 @@ class GuiPathParameter(QHBoxLayout):
     @pyqtSlot()
     def choose_path(self):
         if self.parameter.save_mode:
-            path, _ = QFileDialog.getSaveFileName(self.browse, "Save file...", self.parameter.get())
+            path, _ = QFileDialog.getSaveFileName(self.browse,
+                                                  "Save file...",
+                                                  self.parameter.get())
         else:
-            path, _ = QFileDialog.getOpenFileName(self.browse, "Open file...", self.parameter.get())
+            path, _ = QFileDialog.getOpenFileName(self.browse,
+                                                  "Open file...",
+                                                  self.parameter.get())
         self.set_path_(str(path))
 
 
@@ -76,17 +84,19 @@ class GuiMultiPathParameter(GuiPathParameter):
 
     @pyqtSlot()
     def choose_path(self):
-        paths, _ = QFileDialog.getOpenFileNames(self.browse, "Open multiple files...", self.parameter.get()[0])
+        paths, _ = QFileDialog.getOpenFileNames(self.browse,
+                                                "Open multiple files...",
+                                                self.parameter.get()[0])
         self.set_paths_([str(p) for p in paths])
-
 
 
 class GuiDirectoryParameter(GuiPathParameter):
     @pyqtSlot()
     def choose_path(self):
-        path = QFileDialog.getExistingDirectory(self.browse, "Open directory...", self.parameter.get())
+        path = QFileDialog.getExistingDirectory(self.browse,
+                                                "Open directory...",
+                                                self.parameter.get())
         self.set_path_(str(path))
-
 
 
 class GuiTextParameter(QHBoxLayout):
@@ -112,8 +122,13 @@ class GuiTextParameter(QHBoxLayout):
         self.wnd.setObjectName("CodeDialog")
         self.wnd.setWindowTitle(parameter.window_title)
         desktop = QApplication.instance().desktop()
-        self.wnd.resize(desktop.screenGeometry(desktop.screenNumber(self.element)).width() // 2,
-                        desktop.screenGeometry(desktop.screenNumber(self.element)).height() // 2)
+
+        self.wnd.resize(
+            desktop.screenGeometry(
+                desktop.screenNumber(self.element)).width() // 2,
+            desktop.screenGeometry(
+                desktop.screenNumber(self.element)).height() // 2)
+
         self.wnd.finished.connect(self.actualize)
         self.wnd_geometry = None
 
@@ -252,7 +267,8 @@ class GuiFloatParameter(QHBoxLayout):
 
     @pyqtSlot(int)
     def slider_changed(self, value):
-        if self.ignore_changes: return
+        if self.ignore_changes:
+            return
         self.ignore_changes = True
         slider_value = self.slider_to_value(value)
         if slider_value != self.parameter.get():
@@ -261,7 +277,8 @@ class GuiFloatParameter(QHBoxLayout):
 
     @pyqtSlot(float)
     def spin_changed(self, value):
-        if self.ignore_changes: return
+        if self.ignore_changes:
+            return
         self.ignore_changes = True
         if value != self.parameter.get():
             self.parameter.set(value)
@@ -337,7 +354,8 @@ class GuiComboboxParameter(QHBoxLayout):
 
     def gui_value(self):
         value = self.combobox.itemData(self.combobox.currentIndex())
-        if hasattr(value, "toPyObject"): value = value.toPyObject()
+        if hasattr(value, "toPyObject"):
+            value = value.toPyObject()
         return value
 
     def is_value_outdated(self):
@@ -351,15 +369,17 @@ class GuiComboboxParameter(QHBoxLayout):
     @pyqtSlot()
     def on_value_changed(self):
         if self.is_value_outdated():
-            #index = self.combobox.findData(QtCore.QVariant(self.parameter.get()))
+            # index = self.combobox.findData(QtCore.QVariant(self.parameter.get()))
             index = self.find_index(self.parameter.get())
             self.combobox.setCurrentIndex(index)
 
     def find_index(self, data):
         for i in range(self.combobox.count()):
             d = self.combobox.itemData(i)
-            if hasattr(d, "toPyObject"): d = d.toPyObject()
-            if d == data: return i
+            if hasattr(d, "toPyObject"):
+                d = d.toPyObject()
+            if d == data:
+                return i
         else:
             return -1
 
@@ -470,5 +490,3 @@ class GuiComboboxParameter(QHBoxLayout):
 #     def close_but_press(self):
 #         self.wnd_geometry = self.wnd.geometry()
 #         self.wnd.accept()
-#
-#

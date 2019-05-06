@@ -1,3 +1,7 @@
+# coding: utf-8
+
+r"""UI Workarea"""
+
 import re
 from datetime import datetime, timedelta
 
@@ -10,7 +14,8 @@ from PyQt5.QtGui import *
 from ..diagram.element import Element
 from .elements import GuiElement
 from .mimedata import Mime
-from .wires import WiresForeground, NO_FOREGROUND_WIRES, WiresBackground, WireTools
+from .wires import WiresForeground, NO_FOREGROUND_WIRES, WiresBackground, \
+    WireTools
 
 
 class ScrolledWorkArea(QScrollArea):
@@ -33,7 +38,9 @@ class ScrolledWorkArea(QScrollArea):
         return self.workarea.children().index(element)
 
     def mousePressEvent(self, e):
-        self.mouse_press_pos = e.pos() + QtCore.QPoint(self.horizontalScrollBar().value(), self.verticalScrollBar().value())
+        self.mouse_press_pos = e.pos() + \
+                               QtCore.QPoint(self.horizontalScrollBar().value(),
+                                             self.verticalScrollBar().value())
         e.accept()
 
     def mouseMoveEvent(self, e):
@@ -62,10 +69,13 @@ class ScrolledWorkArea(QScrollArea):
         if not self.diagram.elements:
             self.scroll_to_absolute_center()
             return
+
         pos, n = QtCore.QPoint(0, 0), 0
+
         for e in self.diagram.elements:
             n += 1
             pos += e.pos() + QtCore.QPoint(e.width()//2, e.height()//2)
+
         pos //= n
         pos -= QtCore.QPoint(self.width()//2, self.height()//2)
         self.horizontalScrollBar().setValue(pos.x())
@@ -106,8 +116,12 @@ class WorkArea(QWidget):
         self.user_actions = UserActions()
         self.style_manager = style_manager
         self.wire_tools = WireTools(style_manager)
-        self.wires_in_foreground = WiresForeground(self, self.user_actions, self.wire_tools)
-        self.wires_in_background = WiresBackground(self, self.user_actions, self.wire_tools)
+        self.wires_in_foreground = WiresForeground(self,
+                                                   self.user_actions,
+                                                   self.wire_tools)
+        self.wires_in_background = WiresBackground(self,
+                                                   self.user_actions,
+                                                   self.wire_tools)
         self.selection_manager = SelectionManager(self)
         self.connectors_map = {}
         self.diagram.element_added.connect(self.on_element_added)
@@ -139,14 +153,16 @@ class WorkArea(QWidget):
     def on_element_moused_pressed(self, element, event):
         self.element_move_start = event.pos()
         if event.button() == QtCore.Qt.LeftButton:
-            self.selection_manager.on_element_moused_left_pressed(element, event)
+            self.selection_manager.on_element_moused_left_pressed(element,
+                                                                  event)
         if event.button() == QtCore.Qt.RightButton:
             self.selection_manager.on_element_right_pressed(element, event)
         self.wires_in_background.unselect_wires()
 
     def on_element_moused_left_released(self, element, event):
-        if (event.pos() == self.element_move_start):
-            self.selection_manager.on_element_left_released_inplace(element, event)
+        if event.pos() == self.element_move_start:
+            self.selection_manager.on_element_left_released_inplace(element,
+                                                                    event)
         self.element_move_start = None
 
     def on_element_moused_left_moved(self, element, event):
@@ -158,7 +174,13 @@ class WorkArea(QWidget):
                 e.element_relocated.emit(e)
             if datetime.now() - self.last_auto_scroll_time > timedelta(milliseconds=150):
                 cursor_pos = element.pos() + event.pos()
-                self.parent().parent().ensureVisible(cursor_pos.x(), cursor_pos.y(), 50, 50)  # pozwala na scrollowanie
+
+                # allows you to scroll
+                self.parent().parent().ensureVisible(cursor_pos.x(),
+                                                     cursor_pos.y(),
+                                                     50,
+                                                     50)
+
                 self.last_auto_scroll_time = datetime.now()
 
     @pyqtSlot(Element, tuple)
@@ -170,8 +192,10 @@ class WorkArea(QWidget):
         element.set_workarea(self)
         element.element_relocated.connect(self.user_actions.element_relocated)
         self.adjustSize()
+
         if not NO_FOREGROUND_WIRES:
             self.wires_in_foreground.raise_()
+
         self.connectors_map.update(element.input_connectors)
         self.connectors_map.update(element.output_connectors)
 
@@ -179,7 +203,9 @@ class WorkArea(QWidget):
     def on_element_deleted(self, element):
         for connector in list(element.outputs.values()) + list(element.inputs.values()):
             del self.connectors_map[connector]
-            # Todo: potential memory leak - see: http://stackoverflow.com/questions/5899826/pyqt-how-to-remove-a-widget
+            # Todo: potential memory leak
+            #       - see: http://stackoverflow.com/questions/5899826/
+            #                     pyqt-how-to-remove-a-widget
         element.setParent(None)
         element.deleteLater()
 
@@ -199,14 +225,19 @@ class WorkArea(QWidget):
 
     def dragMoveEvent(self, e):
         mime = e.mimeData().text()
-        # todo: forcing update here causes GUI lags REGARDLESS of the Lines painEvent() (method can be even empty)
+        # todo: forcing update here causes GUI lags REGARDLESS of the
+        #  Lines painEvent() (method can be even empty)
         # - the problem occurs at least on OS X
-        # - possible solutions is updating parts of the Lines widget instead of all of it, by detecting possibly 3
+        # - possible solutions is updating parts of the Lines widget instead
+        #   of all of it, by detecting possibly 3
         #   rectangles for each line that is being affected by the drag:
-        #   http://stackoverflow.com/questions/18043492/qt-custom-widget-update-big-overhead
-        # - some improvement can be made to paintEvent() - using QImage to draw lines and then dump it to painter,
+        #   http://stackoverflow.com/questions/18043492/
+        #   qt-custom-widget-update-big-overhead
+        # - some improvement can be made to paintEvent() - using QImage to
+        #   draw lines and then dump it to painter,
         #   which will use software renderer OR/AND QGLWidget:
-        #   http://stackoverflow.com/questions/6089642/qpainter-painting-alternatives-performance-sucks-on-mac
+        #   http://stackoverflow.com/questions/6089642/
+        #   qpainter-painting-alternatives-performance-sucks-on-mac
         if mime == Mime.INCOMING_CONNECTION:
             points = (e.source(), e.pos())
             self.user_actions.cursor_line_moved.emit(points)
@@ -224,7 +255,8 @@ class WorkArea(QWidget):
                 rect.setWidth(rect.width() + 50)
                 rect.setHeight(rect.height() + 50)
                 united = united.united(rect)
-        return QtCore.QSize(max(default_size, united.right()), max(default_size, united.bottom()))
+        return QtCore.QSize(max(default_size, united.right()),
+                            max(default_size, united.bottom()))
 
     # def paintEvent(self, e):
     #     # todo: it's very inefficient (paint event occurs very often)
@@ -280,11 +312,11 @@ class WorkArea(QWidget):
         self.setStyleSheet(style)
 
     def nearest_grid_point(self, x, y):
-        return int(round(float(x)/self.position_grid) * self.position_grid), int(round(float(y)/self.position_grid) * self.position_grid)
+        return (int(round(float(x)/self.position_grid) * self.position_grid),
+                int(round(float(y)/self.position_grid) * self.position_grid))
 
 
 class SelectionManager:
-
     def __init__(self, workarea):
         self.workarea = workarea
         self.rubberBand = QRubberBand(QRubberBand.Rectangle, self.workarea)
@@ -323,15 +355,18 @@ class SelectionManager:
         if not self.is_control_pressed():
             self.clear_selection()
         self.selection_origin = QtCore.QPoint(event.pos())
-        self.rubberBand.setGeometry(QtCore.QRect(self.selection_origin, QtCore.QSize()))
+        self.rubberBand.setGeometry(QtCore.QRect(self.selection_origin,
+                                                 QtCore.QSize()))
         self.rubberBand.show()
         self.last_selection = self.selected_elements[:]
 
     def on_workarea_mouse_left_move(self, event):
         if self.selection_origin is not None and not self.selection_origin.isNull():
             rect = QtCore.QRect(self.selection_origin, event.pos()).normalized()
-            # FIXME: Hide and show prevent a strange effect of QRubberBand of shaking the widgets beneath, which occur
-            # when making selection in a direction different the right-bottom, but only after placing an element from
+            # FIXME: Hide and show prevent a strange effect of QRubberBand
+            #        of shaking the widgets beneath, which occur
+            # when making selection in a direction different the right-bottom,
+            # but only after placing an element from
             # the palette - on a freshly loaded diagram everything is fine
             self.rubberBand.hide()
             self.rubberBand.setGeometry(rect)

@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+r"""Parameters"""
+
 import threading
 from collections import OrderedDict
 
@@ -14,7 +19,10 @@ class Parameter(QObject):
         super(Parameter, self).__init__()
         self.id = id
         self.object_id = id_manager.next_id(self)
-        if name is None: name = id
+
+        if name is None:
+            name = id
+
         self.name = name
         self.value = value
         self.lock = threading.RLock()
@@ -39,7 +47,8 @@ class Parameter(QObject):
 
     def set(self, value):
         with self.lock:
-            if self.value == value: return
+            if self.value == value:
+                return
             self.value = value
         self.value_changed.emit()
         for child in self.children:
@@ -57,7 +66,13 @@ class Parameter(QObject):
 
 
 class PathParameter(Parameter):
-    def __init__(self, id, name=None, value="", save_mode=False, *args, **kwargs):
+    def __init__(self,
+                 id,
+                 name=None,
+                 value="",
+                 save_mode=False,
+                 *args,
+                 **kwargs):
         super(PathParameter, self).__init__(id, name, value, *args, **kwargs)
         self.save_mode = save_mode
 
@@ -76,7 +91,13 @@ class DirectoryParameter(Parameter):
 
 
 class TextParameter(Parameter):
-    def __init__(self, id, name=None, value="", window_title="Text parameter editor", window_content="", live=True):
+    def __init__(self,
+                 id,
+                 name=None,
+                 value="",
+                 window_title="Text parameter editor",
+                 window_content="",
+                 live=True):
         super(TextParameter, self).__init__(id, name, value)
         self.window_title = window_title
         self.window_content = window_content
@@ -84,12 +105,19 @@ class TextParameter(Parameter):
 
 
 class NumberParameter(Parameter):
-    def __init__(self, id, name=None, value=None, min_=-100000, max_=100000, step=1):
+    def __init__(self,
+                 id,
+                 name=None,
+                 value=None,
+                 min_=-100000,
+                 max_=100000,
+                 step=1):
         if value is None:
             if min_ >= 0:
                 value = min_
             else:
                 value = min(max_, 0)
+
         super(NumberParameter, self).__init__(id, name, value)
         self.min = min_
         self.max = max_
@@ -102,8 +130,19 @@ class IntParameter(NumberParameter):
 
 
 class FloatParameter(NumberParameter):
-    def __init__(self, id, name=None, value=None, min_=-1000, max_=1000, step=0.1):
-        super(FloatParameter, self).__init__(id, name, value=value, min_=min_, max_=max_, step=step)
+    def __init__(self,
+                 id,
+                 name=None,
+                 value=None,
+                 min_=-1000,
+                 max_=1000,
+                 step=0.1):
+        super(FloatParameter, self).__init__(id,
+                                             name,
+                                             value=value,
+                                             min_=min_,
+                                             max_=max_,
+                                             step=step)
 
     def set(self, value):
         NumberParameter.set(self, float(value))
@@ -130,13 +169,18 @@ class PointParameter(Parameter):
 
 
 class ScalarParameter(Parameter):
-    def __init__(self, id, name=None, value=(0, 0, 0, 0), min_=-1000, max_=1000):
+    def __init__(self,
+                 id,
+                 name=None,
+                 value=(0, 0, 0, 0),
+                 min_=-1000,
+                 max_=1000):
         super(ScalarParameter, self).__init__(id, name, value)
         self.min = min_
         self.max = max_
 
     def set(self, value):
-        value = list(value) + [0,0,0,0]
+        value = list(value) + [0, 0, 0, 0]
         value = tuple(value[:4])
         Parameter.set(self, value)
 
@@ -145,6 +189,7 @@ class ComboboxParameter(Parameter):
     def __init__(self, id, values, name=None, default_value_idx=None):
         super(ComboboxParameter, self).__init__(id, name)
         self.values = OrderedDict(values)
+
         if default_value_idx is not None:
             self.set(list(self.values.values())[default_value_idx])
         else:
@@ -161,9 +206,10 @@ class ComboboxParameter(Parameter):
             if 0 <= data < len(self.values):
                 value = list(self.values.values())[data]
             else:
-                print("Warning: Cannot decode parameter '{}' value '{}'".format(self.name, data))
+                print("Warning: Cannot decode "
+                      "parameter '{}' value '{}'".format(self.name, data))
                 value = data
-        else: # cv-lab v1.1+
+        else:  # cv-lab v1.1+
             value = data["value"]
 
         self.set(value)
