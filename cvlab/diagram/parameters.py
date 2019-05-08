@@ -148,6 +148,15 @@ class FloatParameter(NumberParameter):
         NumberParameter.set(self, float(value))
 
 
+# # NEW FOR CAD
+# class ShapeParameter(Parameter):
+#     def __init__(self, id, name=None, value=None):
+#         super(ShapeParameter, self).__init__(id, name, value)
+#
+#     def set(self, value):
+#         Parameter.set(self, value)
+
+
 class SizeParameter(Parameter):
     def __init__(self, id, name=None, value=(1, 1)):
         super(SizeParameter, self).__init__(id, name, value)
