@@ -62,10 +62,4 @@ class ShapePreview(NormalElement):
         outputs["output"] = Data(o)
 
 
-
-
-
-
-
-
 register_elements_auto(__name__, locals(), "CAD Visualization", -98)

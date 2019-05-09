@@ -3,10 +3,15 @@
 
 r"""Data"""
 
+import logging
+
+
 from collections import defaultdict
 from threading import Lock, RLock
 
 from .errors import ProcessingError
+
+logger = logging.getLogger(__name__)
 
 
 class Data:
@@ -15,6 +20,7 @@ class Data:
     IMAGE = 2
 
     def __init__(self, value=None, _type=IMAGE):
+        logger.debug("Data.__init__(%s, %s)" % (str(value), str(_type)))
         self._type = _type
         if _type == Data.SEQUENCE and value is None:
             self._value = []

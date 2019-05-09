@@ -2,7 +2,7 @@
 
 from PyQt5 import QtWidgets
 
-from OCC.Display.backend import load_pyqt5, load_backend
+from OCC.Display.backend import load_backend
 load_backend('qt-pyqt5')
 from OCC.Display.qtDisplay import qtViewer3d
 
