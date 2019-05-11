@@ -2,6 +2,8 @@
 
 r"""UI Widgets"""
 
+import logging
+
 from distutils.util import strtobool
 
 import cv2
@@ -16,6 +18,8 @@ from . import image_preview
 from . import config
 
 ALLOW_UPSIZE = True
+
+logger = logging.getLogger(__name__)
 
 
 class StyledWidget(QWidget):
@@ -207,10 +211,15 @@ class PreviewsContainer(StyledWidget):
         self.update_previews(state)
 
     def switch_visibility(self, value):
+        logger.debug("Switching PreviewContainer visibility")
         if value is None:
+            logger.debug("value is None")
             value = not self.isVisible()
+
         if not self.isVisible():
+            logger.debug("PreviewContainer is not visible")
             self.force_update()
+        logger.debug("value is %s" % str(value))
         self.setVisible(value)
 
     def set_outdated(self):
@@ -227,6 +236,13 @@ class PreviewsContainer(StyledWidget):
             preview.update(True)
 
 
+from .cad_viewer import Qt3dViewer
+import aocutils.primitives
+from OCC.Display.backend import load_backend
+load_backend('qt-pyqt5')
+from OCC.Display.qtDisplay import qtViewer3d
+
+
 class OutputPreview(QHBoxLayout):
     default_image = None
 
@@ -238,9 +254,20 @@ class OutputPreview(QHBoxLayout):
         self.previews_container = previews_container
         self.setAlignment(QtCore.Qt.AlignCenter)
         self.previews = []
-        self.previews.append(ActionImage(self))
+
+        # self.previews.append(ActionImage(self))
+        viewer = qtViewer3d(previews_container)
+        viewer.InitDriver()
+        # viewer = QLabel("toto")  # Ca ca marche !!
+        self.previews.append(viewer)
+
         self.img = self.default_image
-        self.previews[0].setPixmap(self.img)
+
+        # self.previews[0].setPixmap(self.img)
+        #box = aocutils.primitives.box(100, 50, 25)
+        #viewer.display_shape(box)
+        #viewer.viewer_display.FitAll()
+
         self.addWidget(self.previews[0])
 
     def update(self, forced=False):
@@ -365,6 +392,7 @@ class ActionImage(QLabel):
         return result
 
     def mouseDoubleClickEvent(self, mouse_event):
+        logger.debug("Double click on ActionImage")
         self.open_image_dialog()
 
     @pyqtSlot()

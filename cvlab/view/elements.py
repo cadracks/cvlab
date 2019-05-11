@@ -2,6 +2,8 @@
 
 r"""UI elements"""
 
+import logging
+
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QApplication
 
@@ -15,6 +17,8 @@ from .wires import NO_FOREGROUND_WIRES
 
 
 SHOW_ELEMENT_ID = False
+
+logger = logging.getLogger(__name__)
 
 
 class GuiElement(Element, StyledWidget):
@@ -218,6 +222,7 @@ class GuiElement(Element, StyledWidget):
 
     @pyqtSlot()
     def switch_preview(self, value=None):
+        logger.debug("self.preview is a %s" % type(self.preview))
         self.preview.switch_visibility(value)
 
         for action in self.actions():
@@ -265,6 +270,7 @@ class GuiElement(Element, StyledWidget):
         self.hide_hints()
 
     def mouseDoubleClickEvent(self, e):
+        logger.debug("Double click on GuiElement")
         if e.button() == QtCore.Qt.MiddleButton:
             e.ignore()
             return
