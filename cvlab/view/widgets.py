@@ -256,9 +256,9 @@ class OutputPreview(QHBoxLayout):
         self.previews = []
 
         # self.previews.append(ActionImage(self))
-        viewer = qtViewer3d(previews_container)
-        viewer.InitDriver()
-        # viewer = QLabel("toto")  # Ca ca marche !!
+        # viewer = qtViewer3d(previews_container)
+        # viewer.InitDriver()
+        viewer = QLabel("toto")  # Ca ca marche !!
         self.previews.append(viewer)
 
         self.img = self.default_image
